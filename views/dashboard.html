@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Hu Lab @ PolyU</title>
+    <link rel="stylesheet" href="shared-styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .dashboard-header {
+            padding: 40px 0 20px;
+        }
+
+        .user-welcome {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid var(--glass-border);
+            background: var(--glass-bg);
+        }
+
+        .welcome-text {
+            flex: 1;
+        }
+
+        .welcome-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .welcome-subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: var(--secondary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .dashboard-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 16px 0;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+        }
+
+        .activity-desc {
+            font-size: 0.85rem;
+            color: var(--text-accent);
+        }
+
+        .activity-time {
+            font-size: 0.8rem;
+            color: var(--text-accent);
+            white-space: nowrap;
+        }
+
+        .project-card {
+            padding: 20px;
+            border-left: 4px solid transparent;
+            background-image: var(--accent-gradient);
+            background-clip: border-box;
+            transition: all 0.3s ease;
+        }
+
+        .project-card:hover {
+            transform: translateX(5px);
+        }
+
+        .project-header {
+            display: flex;
+            justify-content: between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .project-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+        }
+
+        .project-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-active {
+            background: rgba(74, 222, 128, 0.2);
+            color: #4ade80;
+        }
+
+        .status-planning {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+        }
+
+        .status-completed {
+            background: rgba(96, 165, 250, 0.2);
+            color: #60a5fa;
+        }
+
+        .project-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--glass-bg);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent-gradient);
+            transition: width 0.3s ease;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .quick-action {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .quick-action:hover {
+            background: var(--glass-hover);
+            transform: translateY(-2px);
+        }
+
+        .quick-action-icon {
+            font-size: 1.5rem;
+        }
+
+        .quick-action-text {
+            font-weight: 500;
+        }
+
+        .notification-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+
+        .notification-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-gradient);
+            margin-top: 6px;
+            flex-shrink: 0;
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-text {
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+
+        .notification-time {
+            font-size: 0.75rem;
+            color: var(--text-accent);
+        }
+
+        @media (max-width: 968px) {
+            .dashboard-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .user-welcome {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-element floating-1"></div>
+    <div class="floating-element floating-2"></div>
+    <div class="floating-element floating-3"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-container">
+                <a href="index.html" class="nav-brand">Hu Lab</a>
+                <div class="nav-links">
+                    <a href="index.html" class="nav-item">Home</a>
+                    <a href="dashboard.html" class="nav-item active">Dashboard</a>
+                    <a href="research.html" class="nav-item">Research</a>
+                    <a href="analytics.html" class="nav-item">Analytics</a>
+                    <a href="collaboration.html" class="nav-item">Collaborate</a>
+                    <a href="assessment.html" class="nav-item">Assessment</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Dashboard Header -->
+    <section class="dashboard-header">
+        <div class="container">
+            <div class="glass user-welcome">
+                <img src="https://via.placeholder.com/60x60/4facfe/ffffff?text=U" alt="User Avatar" class="user-avatar" id="userAvatar">
+                <div class="welcome-text">
+                    <h1 class="welcome-title" id="welcomeTitle">Welcome back!</h1>
+                    <p class="welcome-subtitle" id="welcomeSubtitle">Ready to continue your learning journey?</p>
+                </div>
+                <div class="user-actions">
+                    <button class="btn btn-primary" onclick="openProfileModal()">Profile</button>
+                    <button class="btn btn-secondary" onclick="logout()">Logout</button>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="stats-grid">
+                <div class="glass-card stat-card">
+                    <div class="stat-value" id="activeProjects">0</div>
+                    <div class="stat-label">Active Projects</div>
+                </div>
+                <div class="glass-card stat-card">
+                    <div class="stat-value" id="completedTasks">0</div>
+                    <div class="stat-label">Completed Tasks</div>
+                </div>
+                <div class="glass-card stat-card">
+                    <div class="stat-value" id="hoursLogged">0</div>
+                    <div class="stat-label">Hours This Week</div>
+                </div>
+                <div class="glass-card stat-card">
+                    <div class="stat-value" id="collaborations">0</div>
+                    <div class="stat-label">Collaborations</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Content -->
+    <section class="dashboard-content container">
+        <div class="main-content">
+            <!-- Recent Activity -->
+            <div class="glass-card">
+                <h2 class="section-title">Recent Activity</h2>
+                <div id="activityFeed" class="loading">
+                    <!-- Activity items will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Active Projects -->
+            <div class="glass-card">
+                <h2 class="section-title">Active Projects</h2>
+                <div id="activeProjectsList" class="loading">
+                    <!-- Projects will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Learning Progress Chart -->
+            <div class="glass-card">
+                <h2 class="section-title">Learning Progress</h2>
+                <div class="chart-container">
+                    <canvas id="progressChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <!-- Quick Actions -->
+            <div class="glass-card">
+                <h2 class="section-title">Quick Actions</h2>
+                <div class="quick-actions">
+                    <a href="research.html" class="quick-action">
+                        <span class="quick-action-icon">🔬</span>
+                        <span class="quick-action-text">New Research</span>
+                    </a>
+                    <a href="collaboration.html" class="quick-action">
+                        <span class="quick-action-icon">👥</span>
+                        <span class="quick-action-text">Collaborate</span>
+                    </a>
+                    <a href="assessment.html" class="quick-action">
+                        <span class="quick-action-icon">📝</span>
+                        <span class="quick-action-text">Assessment</span>
+                    </a>
+                    <a href="analytics.html" class="quick-action">
+                        <span class="quick-action-icon">📊</span>
+                        <span class="quick-action-text">Analytics</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Notifications -->
+            <div class="glass-card">
+                <h2 class="section-title">Notifications</h2>
+                <div id="notificationsList">
+                    <!-- Notifications will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Upcoming Deadlines -->
+            <div class="glass-card">
+                <h2 class="section-title">Upcoming Deadlines</h2>
+                <div id="upcomingDeadlines">
+                    <!-- Deadlines will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Profile Modal -->
+    <div class="modal-overlay" id="profileModal">
+        <div class="modal">
+            <button class="modal-close" onclick="closeProfileModal()">&times;</button>
+            <div class="modal-header">
+                <h2 class="modal-title">User Profile</h2>
+            </div>
+            <div class="modal-body">
+                <form id="profileForm">
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-input" id="profileName" placeholder="Enter your full name">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-input" id="profileEmail" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Institution</label>
+                        <input type="text" class="form-input" id="profileInstitution" placeholder="Your institution">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Role</label>
+                        <select class="form-select" id="profileRole">
+                            <option value="">Select your role</option>
+                            <option value="student">Student</option>
+                            <option value="educator">Educator</option>
+                            <option value="researcher">Researcher</option>
+                            <option value="administrator">Administrator</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Research Interests</label>
+                        <textarea class="form-textarea" id="profileInterests" placeholder="Describe your research interests and areas of focus..."></textarea>
+                    </div>
+                    <div class="flex gap-4">
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeProfileModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="shared-app.js"></script>
+    <script>
+        let progressChart;
+        
+        $(document).ready(function() {
+            // Check authentication
+            if (!checkAuth()) {
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            // Initialize dashboard
+            initializeDashboard();
+            
+            // Load dashboard data
+            loadDashboardData();
+            
+            // Initialize chart
+            initializeProgressChart();
+            
+            // Set up periodic updates
+            setInterval(loadNotifications, 30000); // Update every 30 seconds
+        });
+        
+        function initializeDashboard() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (user) {
+                $('#welcomeTitle').text(`Welcome back, ${user.name.split(' ')[0]}!`);
+                $('#welcomeSubtitle').text(`${user.email} • Last login: ${new Date().toLocaleDateString()}`);
+                if (user.picture) {
+                    $('#userAvatar').attr('src', user.picture);
+                }
+            }
+        }
+        
+        function loadDashboardData() {
+            // Load statistics
+            loadStatistics();
+            
+            // Load activity feed
+            loadActivityFeed();
+            
+            // Load active projects
+            loadActiveProjects();
+            
+            // Load notifications
+            loadNotifications();
+            
+            // Load upcoming deadlines
+            loadUpcomingDeadlines();
+        }
+        
+        function loadStatistics() {
+            $.ajax({
+                url: '/api/dashboard/stats',
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                success: function(data) {
+                    animateCounter('#activeProjects', data.activeProjects || 0);
+                    animateCounter('#completedTasks', data.completedTasks || 0);
+                    animateCounter('#hoursLogged', data.hoursLogged || 0);
+                    animateCounter('#collaborations', data.collaborations || 0);
+                },
+                error: function() {
+                    // Fallback with dummy data
+                    animateCounter('#activeProjects', 3);
+                    animateCounter('#completedTasks', 12);
+                    animateCounter('#hoursLogged', 8);
+                    animateCounter('#collaborations', 5);
+                }
+            });
+        }
+        
+        function loadActivityFeed() {
+            const activityFeed = $('#activityFeed');
+            activityFeed.removeClass('loading');
+            
+            $.ajax({
+                url: '/api/dashboard/activity',
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                success: function(data) {
+                    displayActivityFeed(data.activities || []);
+                },
+                error: function() {
+                    // Fallback with dummy data
+                    const dummyActivities = [
+                        {
+                            icon: '🔬',
+                            title: 'Started new research project',
+                            description: 'AI-Enhanced Collaborative Writing in Higher Education',
+                            time: '2 hours ago'
+                        },
+                        {
+                            icon: '📊',
+                            title: 'Completed analytics review',
+                            description: 'Weekly learning progress analysis',
+                            time: '4 hours ago'
+                        },
+                        {
+                            icon: '👥',
+                            title: 'Joined collaboration session',
+                            description: 'Working on RIDE-I framework implementation',
+                            time: '1 day ago'
+                        },
+                        {
+                            icon: '📝',
+                            title: 'Submitted assessment',
+                            description: 'Human-AI Collaboration Effectiveness Evaluation',
+                            time: '2 days ago'
+                        }
+                    ];
+                    displayActivityFeed(dummyActivities);
+                }
+            });
+        }
+        
+        function displayActivityFeed(activities) {
+            const activityFeed = $('#activityFeed');
+            const html = activities.map(activity => `
+                <div class="activity-item">
+                    <div class="activity-icon">${activity.icon}</div>
+                    <div class="activity-content">
+                        <div class="activity-title">${activity.title}</div>
+                        <div class="activity-desc">${activity.description}</div>
+                    </div>
+                    <div class="activity-time">${activity.time}</div>
+                </div>
+            `).join('');
+            
+            activityFeed.html(html || '<p class="text-center text-accent">No recent activity</p>');
+        }
+        
+        function loadActiveProjects() {
+            const projectsList = $('#activeProjectsList');
+            projectsList.removeClass('loading');
+            
+            $.ajax({
+                url: '/api/dashboard/projects',
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                success: function(data) {
+                    displayActiveProjects(data.projects || []);
+                },
+                error: function() {
+                    // Fallback with dummy data
+                    const dummyProjects = [
+                        {
+                            id: 1,
+                            title: 'AI-Enhanced Peer Review System',
+                            description: 'Developing tools for collaborative peer assessment with AI assistance',
+                            status: 'active',
+                            progress: 65
+                        },
+                        {
+                            id: 2,
+                            title: 'Multimodal Learning Analytics',
+                            description: 'Analyzing student engagement through multiple data streams',
+                            status: 'planning',
+                            progress: 25
+                        },
+                        {
+                            id: 3,
+                            title: 'Equity in AI-Mediated Education',
+                            description: 'Research on ensuring equitable access to AI-powered learning tools',
+                            status: 'active',
+                            progress: 80
+                        }
+                    ];
+                    displayActiveProjects(dummyProjects);
+                }
+            });
+        }
+        
+        function displayActiveProjects(projects) {
+            const projectsList = $('#activeProjectsList');
+            const html = projects.map(project => `
+                <div class="project-card glass-card" onclick="openProject(${project.id})">
+                    <div class="project-header">
+                        <div>
+                            <div class="project-title">${project.title}</div>
+                            <div class="project-status status-${project.status}">${project.status}</div>
+                        </div>
+                    </div>
+                    <div class="project-desc">${project.description}</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${project.progress}%"></div>
+                    </div>
+                </div>
+            `).join('');
+            
+            projectsList.html(html || '<p class="text-center text-accent">No active projects</p>');
+        }
+        
+        function loadNotifications() {
+            const notificationsList = $('#notificationsList');
+            
+            $.ajax({
+                url: '/api/dashboard/notifications',
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                success: function(data) {
+                    displayNotifications(data.notifications || []);
+                },
+                error: function() {
+                    // Fallback with dummy data
+                    const dummyNotifications = [
+                        {
+                            text: 'New collaboration request from Dr. Sarah Chen',
+                            time: '5 minutes ago'
+                        },
+                        {
+                            text: 'Your research proposal has been approved',
+                            time: '1 hour ago'
+                        },
+                        {
+                            text: 'Weekly analytics report is ready',
+                            time: '3 hours ago'
+                        }
+                    ];
+                    displayNotifications(dummyNotifications);
+                }
+            });
+        }
+        
+        function displayNotifications(notifications) {
+            const notificationsList = $('#notificationsList');
+            const html = notifications.map(notification => `
+                <div class="notification-item">
+                    <div class="notification-dot"></div>
+                    <div class="notification-content">
+                        <div class="notification-text">${notification.text}</div>
+                        <div class="notification-time">${notification.time}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            notificationsList.html(html || '<p class="text-center text-accent">No new notifications</p>');
+        }
+        
+        function loadUpcomingDeadlines() {
+            const deadlinesList = $('#upcomingDeadlines');
+            
+            $.ajax({
+                url: '/api/dashboard/deadlines',
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                success: function(data) {
+                    displayUpcomingDeadlines(data.deadlines || []);
+                },
+                error: function() {
+                    // Fallback with dummy data
+                    const dummyDeadlines = [
+                        {
+                            title: 'Research Progress Report',
+                            date: 'Sep 15, 2024',
+                            priority: 'high'
+                        },
+                        {
+                            title: 'Peer Review Submissions',
+                            date: 'Sep 20, 2024',
+                            priority: 'medium'
+                        }
+                    ];
+                    displayUpcomingDeadlines(dummyDeadlines);
+                }
+            });
+        }
+        
+        function displayUpcomingDeadlines(deadlines) {
+            const deadlinesList = $('#upcomingDeadlines');
+            const html = deadlines.map(deadline => `
+                <div class="notification-item">
+                    <div class="notification-dot ${deadline.priority === 'high' ? 'bg-red-500' : 'bg-yellow-500'}"></div>
+                    <div class="notification-content">
+                        <div class="notification-text">${deadline.title}</div>
+                        <div class="notification-time">Due: ${deadline.date}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            deadlinesList.html(html || '<p class="text-center text-accent">No upcoming deadlines</p>');
+        }
+        
+        function initializeProgressChart() {
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            progressChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Learning Hours',
+                        data: [2, 3, 1, 4, 2, 3, 2],
+                        borderColor: '#4facfe',
+                        backgroundColor: 'rgba(79, 172, 254, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffff'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#ffffff'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#ffffff'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function animateCounter(selector, target) {
+            const element = $(selector);
+            const current = parseInt(element.text()) || 0;
+            const increment = target / 50;
+            let counter = current;
+            
+            const timer = setInterval(() => {
+                counter += increment;
+                if (counter >= target) {
+                    element.text(Math.floor(target));
+                    clearInterval(timer);
+                } else {
+                    element.text(Math.floor(counter));
+                }
+            }, 30);
+        }
+        
+        function openProject(projectId) {
+            window.location.href = `research.html?project=${projectId}`;
+        }
+        
+        function openProfileModal() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (user) {
+                $('#profileName').val(user.name || '');
+                $('#profileEmail').val(user.email || '');
+                $('#profileInstitution').val(user.institution || '');
+                $('#profileRole').val(user.role || '');
+                $('#profileInterests').val(user.interests || '');
+            }
+            $('#profileModal').addClass('active');
+        }
+        
+        function closeProfileModal() {
+            $('#profileModal').removeClass('active');
+        }
+        
+        $('#profileForm').on('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                name: $('#profileName').val(),
+                institution: $('#profileInstitution').val(),
+                role: $('#profileRole').val(),
+                interests: $('#profileInterests').val()
+            };
+            
+            $.ajax({
+                url: '/api/user/profile',
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify(formData),
+                success: function(data) {
+                    // Update local storage
+                    const user = JSON.parse(localStorage.getItem('user'));
+                    Object.assign(user, formData);
+                    localStorage.setItem('user', JSON.stringify(user));
+                    
+                    showNotification('Profile updated successfully!', 'success');
+                    closeProfileModal();
+                    initializeDashboard(); // Refresh display
+                },
+                error: function(xhr, status, error) {
+                    showNotification('Failed to update profile. Please try again.', 'error');
+                }
+            });
+        });
+        
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('user');
+                localStorage.removeItem('token');
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
+</body>
+</html>

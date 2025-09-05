@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research - Hu Lab @ PolyU</title>
+    <link rel="stylesheet" href="shared-styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .research-header {
+            padding: 40px 0 20px;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 10px;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+        }
+
+        .ride-framework {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .ride-phase {
+            text-align: center;
+            padding: 20px 15px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ride-phase.active {
+            background: var(--glass-hover);
+            transform: translateY(-5px);
+        }
+
+        .ride-phase::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: var(--accent-gradient);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+
+        .ride-phase:hover::before,
+        .ride-phase.active::before {
+            opacity: 0.1;
+        }
+
+        .phase-letter {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .phase-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .phase-desc {
+            font-size: 0.8rem;
+            color: var(--text-accent);
+        }
+
+        .research-content {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 30px;
+        }
+
+        .main-research {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .research-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .project-filters {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .filter-btn.active,
+        .filter-btn:hover {
+            background: var(--accent-gradient);
+        }
+
+        .project-list {
+            display: grid;
+            gap: 20px;
+        }
+
+        .project-item {
+            padding: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+            position: relative;
+        }
+
+        .project-item:hover {
+            transform: translateX(5px);
+            border-left-color: #4facfe;
+        }
+
+        .project-item.selected {
+            background: var(--glass-hover);
+            border-left-color: #4facfe;
+        }
+
+        .project-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .project-phase {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .phase-research {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .phase-innovation {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .phase-development {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .phase-evaluation {
+            background: rgba(168, 85, 247, 0.2);
+            color: #a855f7;
+        }
+
+        .phase-implementation {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .project-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .project-summary {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .project-tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .project-tag {
+            padding: 4px 10px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            font-size: 0.75rem;
+            color: var(--text-accent);
+        }
+
+        .project-detail {
+            display: none;
+        }
+
+        .project-detail.active {
+            display: block;
+        }
+
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .detail-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .detail-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .progress-section {
+            margin-bottom: 30px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .progress-bar-container {
+            background: var(--glass-bg);
+            border-radius: 10px;
+            height: 12px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--accent-gradient);
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .section-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .tab-btn {
+            padding: 12px 20px;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab-btn.active {
+            color: var(--text-primary);
+            border-bottom-color: #4facfe;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .research-question {
+            padding: 20px;
+            background: rgba(79, 172, 254, 0.05);
+            border: 1px solid rgba(79, 172, 254, 0.2);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .research-question h4 {
+            color: #4facfe;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .methodology-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .methodology-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--glass-border);
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .methodology-list li:last-child {
+            border-bottom: none;
+        }
+
+        .methodology-list li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: #4facfe;
+            font-weight: bold;
+        }
+
+        .team-member {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+        }
+
+        .member-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            border: 2px solid var(--glass-border);
+        }
+
+        .member-info {
+            flex: 1;
+        }
+
+        .member-name {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .member-role {
+            font-size: 0.85rem;
+            color: var(--text-accent);
+        }
+
+        .new-project-form {
+            display: none;
+        }
+
+        .new-project-form.active {
+            display: block;
+        }
+
+        @media (max-width: 1024px) {
+            .research-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .research-sidebar {
+                order: -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .ride-framework {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .ride-framework .ride-phase:last-child {
+                grid-column: span 2;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .ride-framework {
+                grid-template-columns: 1fr;
+            }
+            
+            .ride-framework .ride-phase:last-child {
+                grid-column: span 1;
+            }
+            
+            .project-filters {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-element floating-1"></div>
+    <div class="floating-element floating-2"></div>
+    <div class="floating-element floating-3"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-container">
+                <a href="index.html" class="nav-brand">Hu Lab</a>
+                <div class="nav-links">
+                    <a href="index.html" class="nav-item">Home</a>
+                    <a href="dashboard.html" class="nav-item">Dashboard</a>
+                    <a href="research.html" class="nav-item active">Research</a>
+                    <a href="analytics.html" class="nav-item">Analytics</a>
+                    <a href="collaboration.html" class="nav-item">Collaborate</a>
+                    <a href="assessment.html" class="nav-item">Assessment</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Research Header -->
+    <section class="research-header">
+        <div class="container">
+            <h1 class="page-title">Research Projects</h1>
+            <p class="page-subtitle">Following the RIDE-I Framework for Human-AI Collaboration in Education</p>
+
+            <!-- RIDE-I Framework Overview -->
+            <div class="glass">
+                <div class="ride-framework">
+                    <div class="ride-phase" data-phase="research">
+                        <div class="phase-letter">R</div>
+                        <div class="phase-name">Research</div>
+                        <div class="phase-desc">Understand learning with AI</div>
+                    </div>
+                    <div class="ride-phase" data-phase="innovation">
+                        <div class="phase-letter">I</div>
+                        <div class="phase-name">Innovation</div>
+                        <div class="phase-desc">Invent what doesn't exist yet</div>
+                    </div>
+                    <div class="ride-phase" data-phase="development">
+                        <div class="phase-letter">D</div>
+                        <div class="phase-name">Development</div>
+                        <div class="phase-desc">Engineer for real classrooms</div>
+                    </div>
+                    <div class="ride-phase" data-phase="evaluation">
+                        <div class="phase-letter">E</div>
+                        <div class="phase-name">Evaluation</div>
+                        <div class="phase-desc">Prove it works and for whom</div>
+                    </div>
+                    <div class="ride-phase" data-phase="implementation">
+                        <div class="phase-letter">I</div>
+                        <div class="phase-name">Implementation</div>
+                        <div class="phase-desc">Scale what works, responsibly</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Research Content -->
+    <section class="container research-content">
+        <div class="main-research">
+            <!-- Project List View -->
+            <div class="glass-card" id="projectListView">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="section-title">Active Research Projects</h2>
+                    <button class="btn btn-primary" onclick="showNewProjectForm()">+ New Project</button>
+                </div>
+                
+                <!-- Project Filters -->
+                <div class="project-filters">
+                    <button class="filter-btn active" data-filter="all">All Projects</button>
+                    <button class="filter-btn" data-filter="research">Research</button>
+                    <button class="filter-btn" data-filter="innovation">Innovation</button>
+                    <button class="filter-btn" data-filter="development">Development</button>
+                    <button class="filter-btn" data-filter="evaluation">Evaluation</button>
+                    <button class="filter-btn" data-filter="implementation">Implementation</button>
+                </div>
+
+                <!-- Projects -->
+                <div class="project-list" id="projectList">
+                    <!-- Projects will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Project Detail View -->
+            <div class="glass-card project-detail" id="projectDetailView">
+                <div class="detail-header">
+                    <div>
+                        <h2 class="detail-title" id="detailTitle">Project Title</h2>
+                        <div class="project-phase" id="detailPhase">Research</div>
+                    </div>
+                    <div class="detail-actions">
+                        <button class="btn btn-secondary" onclick="editProject()">Edit</button>
+                        <button class="btn btn-primary" onclick="shareProject()">Share</button>
+                        <button class="btn btn-secondary" onclick="backToList()">Back to List</button>
+                    </div>
+                </div>
+
+                <!-- Progress Section -->
+                <div class="progress-section">
+                    <div class="progress-header">
+                        <h3>Project Progress</h3>
+                        <span id="progressPercentage">0%</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="detailProgressBar" style="width: 0%"></div>
+                    </div>
+                    <p class="progress-text" id="progressText">Project is in the initial research phase</p>
+                </div>
+
+                <!-- Tabs -->
+                <div class="section-tabs">
+                    <button class="tab-btn active" data-tab="overview">Overview</button>
+                    <button class="tab-btn" data-tab="methodology">Methodology</button>
+                    <button class="tab-btn" data-tab="team">Team</button>
+                    <button class="tab-btn" data-tab="timeline">Timeline</button>
+                    <button class="tab-btn" data-tab="resources">Resources</button>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="tab-content active" id="overview">
+                    <div class="research-question">
+                        <h4>Research Question</h4>
+                        <p id="researchQuestion">What new forms of inquiry, writing, design, and problem‑solving emerge when learners treat AI as a teammate?</p>
+                    </div>
+                    
+                    <h4>Project Summary</h4>
+                    <p id="projectSummary" class="mb-6">This project explores the collaborative dynamics between humans and AI in educational settings, focusing on how students can effectively partner with AI tools to enhance their learning outcomes.</p>
+                    
+                    <h4>Expected Outcomes</h4>
+                    <ul class="methodology-list" id="expectedOutcomes">
+                        <li>Framework for human-AI collaboration in education</li>
+                        <li>Best practices guide for educators</li>
+                        <li>Assessment tools for measuring collaboration effectiveness</li>
+                    </ul>
+                </div>
+
+                <div class="tab-content" id="methodology">
+                    <h4>Research Methodology</h4>
+                    <ul class="methodology-list" id="methodologyList">
+                        <li>Mixed-methods approach combining quantitative and qualitative data</li>
+                        <li>Experimental design with control and treatment groups</li>
+                        <li>Longitudinal study over one academic semester</li>
+                        <li>Pre and post assessments to measure learning outcomes</li>
+                        <li>Interviews and focus groups with participants</li>
+                    </ul>
+                </div>
+
+                <div class="tab-content" id="team">
+                    <h4>Research Team</h4>
+                    <div id="teamMembers">
+                        <!-- Team members will be loaded here -->
+                    </div>
+                </div>
+
+                <div class="tab-content" id="timeline">
+                    <h4>Project Timeline</h4>
+                    <div id="projectTimeline">
+                        <!-- Timeline will be loaded here -->
+                    </div>
+                </div>
+
+                <div class="tab-content" id="resources">
+                    <h4>Project Resources</h4>
+                    <div id="projectResources">
+                        <!-- Resources will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- New Project Form -->
+            <div class="glass-card new-project-form" id="newProjectForm">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="section-title">Create New Research Project</h2>
+                    <button class="btn btn-secondary" onclick="hideNewProjectForm()">Cancel</button>
+                </div>
+
+                <form id="projectForm">
+                    <div class="grid grid-cols-2">
+                        <div class="form-group">
+                            <label class="form-label">Project Title</label>
+                            <input type="text" class="form-input" id="projectTitle" placeholder="Enter project title" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">RIDE-I Phase</label>
+                            <select class="form-select" id="projectPhase" required>
+                                <option value="">Select phase</option>
+                                <option value="research">Research</option>
+                                <option value="innovation">Innovation</option>
+                                <option value="development">Development</option>
+                                <option value="evaluation">Evaluation</option>
+                                <option value="implementation">Implementation</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Research Question</label>
+                        <textarea class="form-textarea" id="projectQuestion" placeholder="What is the main research question this project addresses?" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Project Description</label>
+                        <textarea class="form-textarea" id="projectDescription" placeholder="Provide a detailed description of the project..." required></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-2">
+                        <div class="form-group">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" class="form-input" id="projectStartDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">End Date</label>
+                            <input type="date" class="form-input" id="projectEndDate" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Tags (comma-separated)</label>
+                        <input type="text" class="form-input" id="projectTags" placeholder="ai-collaboration, education, assessment">
+                    </div>
+
+                    <div class="flex gap-4">
+                        <button type="submit" class="btn btn-primary">Create Project</button>
+                        <button type="button" class="btn btn-secondary" onclick="hideNewProjectForm()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="research-sidebar">
+            <!-- Quick Stats -->
+            <div class="glass-card">
+                <h3 class="section-title">Research Stats</h3>
+                <div class="grid grid-cols-1 gap-4">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-primary" id="totalProjects">0</div>
+                        <div class="text-sm text-accent">Total Projects</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-primary" id="activeProjects">0</div>
+                        <div class="text-sm text-accent">Active Projects</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-primary" id="completedProjects">0</div>
+                        <div class="text-sm text-accent">Completed</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Updates -->
+            <div class="glass-card">
+                <h3 class="section-title">Recent Updates</h3>
+                <div id="recentUpdates">
+                    <!-- Updates will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Research Areas -->
+            <div class="glass-card">
+                <h3 class="section-title">Focus Areas</h3>
+                <div class="flex flex-col gap-2" id="focusAreas">
+                    <span class="project-tag">Human-AI Collaboration</span>
+                    <span class="project-tag">Learning Analytics</span>
+                    <span class="project-tag">Educational Technology</span>
+                    <span class="project-tag">Assessment Innovation</span>
+                    <span class="project-tag">Equity in Education</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="shared-app.js"></script>
+    <script>
+        let currentProject = null;
+        let projects = [];
+
+        $(document).ready(function() {
+            // Check authentication
+            if (!checkAuth()) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Initialize research page
+            initializeResearchPage();
+            
+            // Load projects
+            loadProjects();
+            
+            // Set up event listeners
+            setupEventListeners();
+        });
+
+        function initializeResearchPage() {
+            // Set up RIDE-I phase interactions
+            $('.ride-phase').click(function() {
+                const phase = $(this).data('phase');
+                filterProjectsByPhase(phase);
+                
+                $('.ride-phase').removeClass('active');
+                $(this).addClass('active');
+            });
+
+            // Set up tab switching
+            $('.tab-btn').click(function() {
+                const tab = $(this).data('tab');
+                switchTab(tab);
+            });
+
+            // Set up filter buttons
+            $('.filter-btn').click(function() {
+                const filter = $(this).data('filter');
+                filterProjects(filter);
+                
+                $('.filter-btn').removeClass('active');
+                $(this).addClass('active');
+            });
+        }
+
+        function setupEventListeners() {
+            // Project form submission
+            $('#projectForm').on('submit', function(e) {
+                e.preventDefault();
+                createNewProject();
+            });
+        }
+
+        function loadProjects() {
+            $.ajax({
+                url: '/api/research/projects',
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                success: function(data) {
+                    projects = data.projects || [];
+                    displayProjects(projects);
+                    updateStats();
+                },
+                error: function() {
+                    // Fallback with dummy data
+                    projects = getDummyProjects();
+                    displayProjects(projects);
+                    updateStats();
+                }
+            });
+        }
+
+        function getDummyProjects() {
+            return [
+                {
+                    id: 1,
+                    title: 'AI-Enhanced Peer Review System',
+                    phase: 'development',
+                    question: 'How can AI assistants improve the quality and efficiency of peer review processes in academic writing?',
+                    summary: 'Developing tools for collaborative peer assessment with AI assistance to enhance learning outcomes in writing-intensive courses.',
+                    progress: 65,
+                    tags: ['peer-review', 'ai-assistance', 'writing', 'assessment'],
+                    startDate: '2024-01-15',
+                    endDate: '2024-12-15',
+                    team: [
+                        { name: 'Dr. Sarah Chen', role: 'Principal Investigator', avatar: 'https://via.placeholder.com/40x40/4facfe/ffffff?text=SC' },
+                        { name: 'Prof. Michael Kim', role: 'Co-Investigator', avatar: 'https://via.placeholder.com/40x40/f093fb/ffffff?text=MK' },
+                        { name: 'Lisa Wang', role: 'Research Assistant', avatar: 'https://via.placeholder.com/40x40/764ba2/ffffff?text=LW' }
+                    ]
+                },
+                {
+                    id: 2,
+                    title: 'Multimodal Learning Analytics',
+                    phase: 'evaluation',
+                    question: 'What patterns in student behavior predict successful human-AI collaboration in learning environments?',
+                    summary: 'Analyzing student engagement through multiple data streams to understand effective human-AI collaboration patterns.',
+                    progress: 80,
+                    tags: ['learning-analytics', 'multimodal', 'collaboration', 'prediction'],
+                    startDate: '2024-02-01',
+                    endDate: '2024-11-30',
+                    team: [
+                        { name: 'Prof. Alex Johnson', role: 'Principal Investigator', avatar: 'https://via.placeholder.com/40x40/667eea/ffffff?text=AJ' },
+                        { name: 'Dr. Emily Zhang', role: 'Data Scientist', avatar: 'https://via.placeholder.com/40x40/f5576c/ffffff?text=EZ' }
+                    ]
+                },
+                {
+                    id: 3,
+                    title: 'Equity in AI-Mediated Education',
+                    phase: 'research',
+                    question: 'How can we ensure AI-powered learning tools promote rather than hinder educational equity?',
+                    summary: 'Research on ensuring equitable access to AI-powered learning tools across diverse student populations.',
+                    progress: 35,
+                    tags: ['equity', 'accessibility', 'diversity', 'ai-ethics'],
+                    startDate: '2024-03-01',
+                    endDate: '2025-02-28',
+                    team: [
+                        { name: 'Dr. Maria Rodriguez', role: 'Principal Investigator', avatar: 'https://via.placeholder.com/40x40/00f2fe/ffffff?text=MR' },
+                        { name: 'James Liu', role: 'PhD Student', avatar: 'https://via.placeholder.com/40x40/22c1c3/ffffff?text=JL' }
+                    ]
+                }
+            ];
+        }
+
+        function displayProjects(projectList) {
+            const container = $('#projectList');
+            const html = projectList.map(project => `
+                <div class="project-item glass-card" onclick="viewProjectDetails(${project.id})" data-phase="${project.phase}">
+                    <div class="project-meta">
+                        <div class="project-phase phase-${project.phase}">${project.phase}</div>
+                    </div>
+                    <h3 class="project-title">${project.title}</h3>
+                    <p class="project-summary">${project.summary}</p>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width: ${project.progress}%"></div>
+                    </div>
+                    <div class="project-tags">
+                        ${project.tags.map(tag => `<span class="project-tag">${tag}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            container.html(html);
+        }
+
+        function filterProjects(filter) {
+            const filteredProjects = filter === 'all' ? projects : projects.filter(p => p.phase === filter);
+            displayProjects(filteredProjects);
+        }
+
+        function filterProjectsByPhase(phase) {
+            $('.filter-btn').removeClass('active');
+            $(`.filter-btn[data-filter="${phase}"]`).addClass('active');
+            filterProjects(phase);
+        }
+
+        function viewProjectDetails(projectId) {
+            const project = projects.find(p => p.id === projectId);
+            if (!project) return;
+
+            currentProject = project;
+
+            // Update detail view
+            $('#detailTitle').text(project.title);
+            $('#detailPhase').text(project.phase).attr('class', `project-phase phase-${project.phase}`);
+            $('#progressPercentage').text(`${project.progress}%`);
+            $('#detailProgressBar').css('width', `${project.progress}%`);
+            $('#researchQuestion').text(project.question);
+            $('#projectSummary').text(project.summary);
+
+            // Update team section
+            const teamHtml = project.team.map(member => `
+                <div class="team-member">
+                    <img src="${member.avatar}" alt="${member.name}" class="member-avatar">
+                    <div class="member-info">
+                        <div class="member-name">${member.name}</div>
+                        <div class="member-role">${member.role}</div>
+                    </div>
+                </div>
+            `).join('');
+            $('#teamMembers').html(teamHtml);
+
+            // Show detail view
+            $('#projectListView').hide();
+            $('#projectDetailView').show();
+        }
+
+        function backToList() {
+            $('#projectDetailView').hide();
+            $('#newProjectForm').hide();
+            $('#projectListView').show();
+            currentProject = null;
+        }
+
+        function showNewProjectForm() {
+            $('#projectListView').hide();
+            $('#projectDetailView').hide();
+            $('#newProjectForm').show();
+        }
+
+        function hideNewProjectForm() {
+            $('#newProjectForm').hide();
+            $('#projectListView').show();
+        }
+
+        function createNewProject() {
+            const formData = {
+                title: $('#projectTitle').val(),
+                phase: $('#projectPhase').val(),
+                question: $('#projectQuestion').val(),
+                description: $('#projectDescription').val(),
+                startDate: $('#projectStartDate').val(),
+                endDate: $('#projectEndDate').val(),
+                tags: $('#projectTags').val().split(',').map(tag => tag.trim()).filter(tag => tag)
+            };
+
+            $.ajax({
+                url: '/api/research/projects',
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify(formData),
+                success: function(data) {
+                    showNotification('Project created successfully!', 'success');
+                    hideNewProjectForm();
+                    loadProjects(); // Reload projects
+                    $('#projectForm')[0].reset();
+                },
+                error: function(xhr, status, error) {
+                    console.error('Create project error:', error);
+                    showNotification('Failed to create project. Please try again.', 'error');
+                }
+            });
+        }
+
+        function switchTab(tabName) {
+            $('.tab-btn').removeClass('active');
+            $(`.tab-btn[data-tab="${tabName}"]`).addClass('active');
+            
+            $('.tab-content').removeClass('active');
+            $(`#${tabName}`).addClass('active');
+        }
+
+        function updateStats() {
+            $('#totalProjects').text(projects.length);
+            $('#activeProjects').text(projects.filter(p => ['research', 'innovation', 'development', 'evaluation'].includes(p.phase)).length);
+            $('#completedProjects').text(projects.filter(p => p.phase === 'implementation' && p.progress === 100).length);
+        }
+
+        function editProject() {
+            if (!currentProject) return;
+            // Implementation for editing project
+            showNotification('Edit functionality coming soon!', 'info');
+        }
+
+        function shareProject() {
+            if (!currentProject) return;
+            // Implementation for sharing project
+            const shareUrl = `${window.location.origin}/research.html?project=${currentProject.id}`;
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                showNotification('Project link copied to clipboard!', 'success');
+            }).catch(() => {
+                showNotification('Failed to copy link. Please try again.', 'error');
+            });
+        }
+
+        // Initialize animations
+        initializeAnimations();
+    </script>
+</body>
+</html>

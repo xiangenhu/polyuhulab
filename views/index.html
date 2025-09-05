@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hu Lab @ PolyU - Collaboration with AI in Education</title>
+    <link rel="stylesheet" href="shared-styles.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .hero-section {
+            padding: 80px 0 60px;
+            text-align: center;
+            position: relative;
+        }
+
+        .lab-title {
+            font-size: 4rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #fff, #f0f0f0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 16px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        .tagline {
+            font-size: 1.4rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            margin-bottom: 20px;
+        }
+
+        .university {
+            font-size: 1.1rem;
+            color: var(--text-accent);
+            margin-bottom: 40px;
+        }
+
+        .hero-content {
+            padding: 60px 40px;
+            margin: 40px 0;
+        }
+
+        .vision-title {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .vision-text {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            max-width: 800px;
+            margin: 0 auto 30px;
+        }
+
+        .mission-text {
+            font-size: 1.1rem;
+            line-height: 1.7;
+            color: var(--text-accent);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .login-section {
+            margin: 40px 0;
+        }
+
+        .google-login-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .login-prompt {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .features-section {
+            padding: 60px 0;
+        }
+
+        .feature-card {
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            background: var(--secondary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .feature-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .feature-desc {
+            color: var(--text-accent);
+            line-height: 1.5;
+        }
+
+        .cta-section {
+            padding: 80px 0;
+            text-align: center;
+        }
+
+        .cta-title {
+            font-size: 2.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            background: var(--secondary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .cta-text {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Loading state for login */
+        .login-loading {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-secondary);
+        }
+
+        .login-loading.active {
+            display: flex;
+        }
+
+        @media (max-width: 768px) {
+            .lab-title {
+                font-size: 2.5rem;
+            }
+            
+            .vision-title {
+                font-size: 2rem;
+            }
+            
+            .hero-content {
+                padding: 40px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-element floating-1"></div>
+    <div class="floating-element floating-2"></div>
+    <div class="floating-element floating-3"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-container">
+                <a href="index.html" class="nav-brand">Hu Lab</a>
+                <div class="nav-links">
+                    <a href="index.html" class="nav-item active">Home</a>
+                    <a href="dashboard.html" class="nav-item">Dashboard</a>
+                    <a href="research.html" class="nav-item">Research</a>
+                    <a href="analytics.html" class="nav-item">Analytics</a>
+                    <a href="collaboration.html" class="nav-item">Collaborate</a>
+                    <a href="assessment.html" class="nav-item">Assessment</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <h1 class="lab-title">Hu Lab</h1>
+            <p class="tagline">Humans × AI: co‑creating better learning for all</p>
+            <p class="university">The Hong Kong Polytechnic University</p>
+
+            <div class="glass hero-content">
+                <h2 class="vision-title">Our Vision</h2>
+                <p class="vision-text">
+                    A world where <strong>every learner and educator</strong> can <strong>work fluently with AI collaborators</strong>—not as replacements, but as <strong>partners</strong> that amplify curiosity, mastery, and inclusion across higher education and lifelong learning.
+                </p>
+                <p class="mission-text">
+                    We <strong>design, study, and scale</strong> human–AI collaboration that measurably improves learning, teaching, and equity. Grounded in learning science and realized through robust technology, we build, trial, and implement AI‑augmented practices, tools, and policies that help <strong>students learn better</strong>, <strong>educators teach smarter</strong>, and <strong>institutions transform responsibly</strong>.
+                </p>
+            </div>
+
+            <!-- Login Section -->
+            <div class="login-section">
+                <div class="glass google-login-container">
+                    <p class="login-prompt">Sign in to access your personalized learning workspace</p>
+                    <div id="g_id_onload"
+                         data-client_id="YOUR_GOOGLE_CLIENT_ID"
+                         data-callback="handleCredentialResponse"
+                         data-auto_prompt="false">
+                    </div>
+                    <div class="g_id_signin"
+                         data-type="standard"
+                         data-size="large"
+                         data-theme="filled_blue"
+                         data-text="signin_with"
+                         data-shape="rectangular"
+                         data-logo_alignment="left">
+                    </div>
+                    <div class="login-loading" id="loginLoading">
+                        <div class="loading"></div>
+                        <span>Signing you in...</span>
+                    </div>
+                    <p class="text-sm text-accent">
+                        By signing in, you agree to our terms of service and privacy policy
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features-section">
+        <div class="container">
+            <h2 class="text-center text-2xl mb-8">Platform Features</h2>
+            <div class="grid grid-cols-3">
+                <div class="glass-card feature-card">
+                    <div class="feature-icon">🔬</div>
+                    <h3 class="feature-title">RIDE-I Research Framework</h3>
+                    <p class="feature-desc">Systematic approach to Research, Innovation, Development, Evaluation, and Implementation of AI-enhanced learning solutions.</p>
+                </div>
+                <div class="glass-card feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3 class="feature-title">Learning Analytics</h3>
+                    <p class="feature-desc">Advanced analytics to track learning progress, identify patterns, and optimize human-AI collaboration effectiveness.</p>
+                </div>
+                <div class="glass-card feature-card">
+                    <div class="feature-icon">👥</div>
+                    <h3 class="feature-title">Collaborative Workspace</h3>
+                    <p class="feature-desc">Real-time collaboration tools for students, educators, and AI partners working together on research projects.</p>
+                </div>
+                <div class="glass-card feature-card">
+                    <div class="feature-icon">🎯</div>
+                    <h3 class="feature-title">Assessment Innovation</h3>
+                    <p class="feature-desc">New forms of assessment that evaluate both individual learning and effective AI collaboration skills.</p>
+                </div>
+                <div class="glass-card feature-card">
+                    <div class="feature-icon">⚖️</div>
+                    <h3 class="feature-title">Equity & Accessibility</h3>
+                    <p class="feature-desc">Ensuring AI tools and practices promote rather than hinder educational equity and accessibility for all learners.</p>
+                </div>
+                <div class="glass-card feature-card">
+                    <div class="feature-icon">🛡️</div>
+                    <h3 class="feature-title">Ethical AI Governance</h3>
+                    <p class="feature-desc">Frameworks and policies for responsible AI implementation in educational contexts.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="glass">
+                <h2 class="cta-title">Ready to Transform Learning?</h2>
+                <p class="cta-text">
+                    Join our community of educators, researchers, and students exploring the future of human-AI collaboration in education. Sign in above to get started with your personalized workspace.
+                </p>
+                <div class="flex justify-center gap-4">
+                    <a href="research.html" class="btn btn-primary">Explore Research</a>
+                    <a href="collaboration.html" class="btn btn-secondary">Join Community</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="p-8">
+        <div class="container">
+            <div class="glass text-center p-6">
+                <p class="text-accent">
+                    Hu Lab @ The Hong Kong Polytechnic University<br>
+                    Building human–AI partnerships for more effective, equitable, and humane learning
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="shared-app.js"></script>
+    <script>
+        // Google Sign-In callback
+        function handleCredentialResponse(response) {
+            const loginLoading = $('#loginLoading');
+            const googleButton = $('.g_id_signin');
+            
+            loginLoading.addClass('active');
+            googleButton.hide();
+            
+            // Decode JWT token (in production, verify on server)
+            const responsePayload = decodeJwtResponse(response.credential);
+            
+            // Simulate API call to authenticate user
+            $.ajax({
+                url: '/api/auth/google',
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                data: JSON.stringify({
+                    credential: response.credential,
+                    user: {
+                        id: responsePayload.sub,
+                        email: responsePayload.email,
+                        name: responsePayload.name,
+                        picture: responsePayload.picture
+                    }
+                }),
+                success: function(data) {
+                    // Store user data
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    localStorage.setItem('token', data.token);
+                    
+                    // Show success message
+                    showNotification('Login successful! Redirecting to dashboard...', 'success');
+                    
+                    // Redirect to dashboard
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1500);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Login error:', error);
+                    showNotification('Login failed. Please try again.', 'error');
+                    
+                    loginLoading.removeClass('active');
+                    googleButton.show();
+                }
+            });
+        }
+        
+        // Helper function to decode JWT
+        function decodeJwtResponse(token) {
+            var base64Url = token.split('.')[1];
+            var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        }
+        
+        // Check if user is already logged in
+        $(document).ready(function() {
+            const user = localStorage.getItem('user');
+            const token = localStorage.getItem('token');
+            
+            if (user && token) {
+                // User is already logged in, redirect to dashboard
+                window.location.href = 'dashboard.html';
+            }
+            
+            // Initialize animations
+            initializeAnimations();
+        });
+        
+        // Feature card hover effects
+        $('.feature-card').hover(
+            function() {
+                $(this).find('.feature-icon').css('transform', 'scale(1.1)');
+            },
+            function() {
+                $(this).find('.feature-icon').css('transform', 'scale(1)');
+            }
+        );
+    </script>
+</body>
+</html>

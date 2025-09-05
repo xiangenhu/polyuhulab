@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collaboration - Hu Lab @ PolyU</title>
+    <link rel="stylesheet" href="shared-styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .collaboration-header {
+            padding: 40px 0 20px;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 10px;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+        }
+
+        .workspace-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .workspace-tab {
+            padding: 12px 24px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .workspace-tab.active,
+        .workspace-tab:hover {
+            background: var(--accent-gradient);
+            transform: translateY(-2px);
+        }
+
+        .collaboration-layout {
+            display: grid;
+            grid-template-columns: 250px 1fr 300px;
+            gap: 20px;
+            height: calc(100vh - 300px);
+            min-height: 600px;
+        }
+
+        .participants-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .main-workspace {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .tools-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Participants Panel */
+        .participants-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .participant-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-bottom: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+
+        .participant-item:hover {
+            background: var(--glass-bg);
+        }
+
+        .participant-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            border: 2px solid var(--glass-border);
+            position: relative;
+        }
+
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            border: 2px solid var(--glass-bg);
+        }
+
+        .status-online { background: #22c55e; }
+        .status-away { background: #f59e0b; }
+        .status-busy { background: #ef4444; }
+        .status-offline { background: #6b7280; }
+
+        .participant-info {
+            flex: 1;
+        }
+
+        .participant-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 2px;
+        }
+
+        .participant-role {
+            font-size: 0.75rem;
+            color: var(--text-accent);
+        }
+
+        .participant-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .action-btn {
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: var(--glass-bg);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background: var(--accent-gradient);
+        }
+
+        /* Main Workspace */
+        .workspace-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .workspace-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .toolbar-left {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .toolbar-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .collaborative-editor {
+            flex: 1;
+            padding: 20px;
+            background: var(--glass-bg);
+            border-radius: 0 0 15px 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .editor-content {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: transparent;
+            color: var(--text-primary);
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: none;
+            outline: none;
+        }
+
+        .editor-content::placeholder {
+            color: var(--text-accent);
+        }
+
+        .cursor-indicator {
+            position: absolute;
+            width: 2px;
+            height: 20px;
+            background: var(--accent-gradient);
+            animation: blink 1s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .collaboration-cursors {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .user-cursor {
+            position: absolute;
+            width: 2px;
+            height: 18px;
+            border-radius: 1px;
+        }
+
+        .user-cursor::after {
+            content: attr(data-user);
+            position: absolute;
+            top: -25px;
+            left: 0;
+            background: inherit;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.7rem;
+            white-space: nowrap;
+        }
+
+        /* AI Assistant Panel */
+        .ai-assistant {
+            display: flex;
+            flex-direction: column;
+            height: 400px;
+        }
+
+        .ai-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .ai-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .ai-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .ai-chat {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .ai-message {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .ai-message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--accent-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .message-content {
+            background: var(--glass-bg);
+            padding: 10px 12px;
+            border-radius: 12px;
+            max-width: 70%;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .ai-message.user .message-content {
+            background: var(--accent-gradient);
+        }
+
+        .ai-input-area {
+            padding: 15px;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            gap: 10px;
+        }
+
+        .ai-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .ai-input:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        .send-btn {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: var(--accent-gradient);
+            border-radius: 50%;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s ease;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.1);
+        }
+
+        /* Version History */
+        .version-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid var(--glass-border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .version-item:hover {
+            background: var(--glass-bg);
+        }
+
+        .version-info {
+            flex: 1;
+        }
+
+        .version-title {
+            font-size: 0.9rem;
+            margin-bottom: 3px;
+        }
+
+        .version-meta {
+            font-size: 0.75rem;
+            color: var(--text-accent);
+        }
+
+        .version-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        /* Activity Feed */
+        .activity-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: white;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .activity-text {
+            flex: 1;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .activity-time {
+            font-size: 0.7rem;
+            color: var(--text-accent);
+            white-space: nowrap;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .collaboration-layout {
+                grid-template-columns: 200px 1fr 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .collaboration-layout {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr auto;
+                height: auto;
+                min-height: auto;
+            }
+            
+            .participants-panel,
+            .tools-panel {
+                order: 1;
+            }
+            
+            .main-workspace {
+                order: 2;
+                min-height: 400px;
+            }
+            
+            .ai-assistant {
+                height: 300px;
+            }
+        }
+
+        /* Connection Status */
+        .connection-status {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            padding: 10px 15px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 25px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+
+        .connection-status.connected {
+            border-color: rgba(34, 197, 94, 0.3);
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .connection-status.disconnected {
+            border-color: rgba(239, 68, 68, 0.3);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .connection-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+        }
+
+        .connection-status.disconnected .connection-dot {
+            background: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-element floating-1"></div>
+    <div class="floating-element floating-2"></div>
+    <div class="floating-element floating-3"></div>
+
+    <!-- Connection Status -->
+    <div class="connection-status" id="connectionStatus">
+        <div class="connection-dot"></div>
+        <span id="connectionText">Connected</span>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-container">
+                <a href="index.html" class="nav-brand">Hu Lab</a>
+                <div class="nav-links">
+                    <a href="index.html" class="nav-item">Home</a>
+                    <a href="dashboard.html" class="nav-item">Dashboard</a>
+                    <a href="research.html" class="nav-item">Research</a>
+                    <a href="analytics.html" class="nav-item">Analytics</a>
+                    <a href="collaboration.html" class="nav-item active">Collaborate</a>
+                    <a href="assessment.html" class="nav-item">Assessment</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Collaboration Header -->
+    <section class="collaboration-header">
+        <div class="container">
+            <h1 class="page-title">Collaborative Workspace</h1>
+            <p class="page-subtitle">Real-time collaboration between humans and AI</p>
+
+            <!-- Workspace Selector -->
+            <div class="workspace-selector">
+                <button class="workspace-tab active" data-workspace="document">📝 Document</button>
+                <button class="workspace-tab" data-workspace="research">🔬 Research</button>
+                <button class="workspace-tab" data-workspace="presentation">📊 Presentation</button>
+                <button class="workspace-tab" data-workspace="code">💻 Code</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Collaboration Layout -->
+    <section class="container-full">
+        <div class="collaboration-layout">
+            <!-- Participants Panel -->
+            <div class="participants-panel">
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Participants (4)</h3>
+                        <button class="btn btn-primary btn-sm" onclick="inviteParticipants()">+ Invite</button>
+                    </div>
+                    <div class="participants-list" id="participantsList">
+                        <!-- Participants will be loaded here -->
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Recent Activity</h3>
+                    </div>
+                    <div id="activityFeed">
+                        <!-- Activity items will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Workspace -->
+            <div class="main-workspace">
+                <div class="glass-card workspace-content">
+                    <div class="workspace-toolbar">
+                        <div class="toolbar-left">
+                            <button class="btn btn-secondary" onclick="saveDocument()">💾 Save</button>
+                            <button class="btn btn-secondary" onclick="shareDocument()">🔗 Share</button>
+                            <select class="form-select" id="languageSelect" style="width: auto;">
+                                <option value="en">English</option>
+                                <option value="zh">中文</option>
+                                <option value="es">Español</option>
+                            </select>
+                        </div>
+                        <div class="toolbar-right">
+                            <span class="text-sm text-secondary">Auto-save: <span id="autoSaveStatus">Saved</span></span>
+                            <button class="btn btn-secondary" onclick="toggleVersionHistory()">📜 History</button>
+                        </div>
+                    </div>
+                    <div class="collaborative-editor">
+                        <textarea class="editor-content" id="collaborativeEditor" placeholder="Start typing your collaborative document here...
+
+This workspace supports real-time collaboration between multiple users and AI assistants. Key features:
+
+• Real-time editing with live cursor tracking
+• AI-powered writing assistance and suggestions  
+• Automatic language translation and adaptation
+• Version control with collaborative history
+• Multi-modal content support (text, images, data)
+
+Try asking the AI assistant for help with:
+- Research and fact-checking
+- Writing style and grammar improvements
+- Content organization and structure
+- Citations and references
+- Data analysis and visualization
+
+The AI will provide contextual suggestions based on your content and collaborate seamlessly with human participants."></textarea>
+                        <div class="collaboration-cursors" id="collaborationCursors">
+                            <!-- User cursors will appear here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tools Panel -->
+            <div class="tools-panel">
+                <!-- AI Assistant -->
+                <div class="glass-card ai-assistant">
+                    <div class="ai-header">
+                        <h3 class="card-title">AI Assistant</h3>
+                        <div class="ai-status">
+                            <div class="ai-status-dot"></div>
+                            <span>Active</span>
+                        </div>
+                    </div>
+                    <div class="ai-chat" id="aiChat">
+                        <div class="ai-message">
+                            <div class="message-avatar">🤖</div>
+                            <div class="message-content">
+                                Hello! I'm here to assist with your collaborative work. I can help with research, writing, analysis, and more. What would you like to work on?
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ai-input-area">
+                        <input type="text" class="ai-input" id="aiInput" placeholder="Ask AI for help...">
+                        <button class="send-btn" onclick="sendAiMessage()">→</button>
+                    </div>
+                </div>
+
+                <!-- Version History -->
+                <div class="glass-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Version History</h3>
+                    </div>
+                    <div id="versionHistory">
+                        <!-- Version items will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Invite Modal -->
+    <div class="modal-overlay" id="inviteModal">
+        <div class="modal">
+            <button class="modal-close" onclick="closeInviteModal()">&times;</button>
+            <div class="modal-header">
+                <h2 class="modal-title">Invite Collaborators</h2>
+            </div>
+            <div class="modal-body">
+                <form id="inviteForm">
+                    <div class="form-group">
+                        <label class="form-label">Email Addresses</label>
+                        <textarea class="form-textarea" id="inviteEmails" placeholder="Enter email addresses, separated by commas or new lines..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Permission Level</label>
+                        <select class="form-select" id="permissionLevel">
+                            <option value="edit">Can edit</option>
+                            <option value="comment">Can comment</option>
+                            <option value="view">Can view</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Message (optional)</label>
+                        <textarea class="form-textarea" id="inviteMessage" placeholder="Add a personal message..."></textarea>
+                    </div>
+                    <div class="flex gap-4">
+                        <button type="submit" class="btn btn-primary">Send Invitations</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeInviteModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="shared-app.js"></script>
+    <script>
+        let websocket = null;
+        let currentDocument = null;
+        let participants = [];
+        let currentUser = null;
+        let isConnected = false;
+        let autoSaveTimer = null;
+
+        $(document).ready(function() {
+            // Check authentication
+            if (!checkAuth()) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            currentUser = JSON.parse(localStorage.getItem('user'));
+            
+            // Initialize collaboration workspace
+            initializeCollaboration();
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Connect to WebSocket
+            connectWebSocket();
+            
+            // Load initial data
+            loadCollaborationData();
+        });
+
+        function initializeCollaboration() {
+            // Set up workspace tabs
+            $('.workspace-tab').click(function() {
+                const workspace = $(this).data('workspace');
+                switchWorkspace(workspace);
+                
+                $('.workspace-tab').removeClass('active');
+                $(this).addClass('active');
+            });
+
+            // Set up auto-save
+            setupAutoSave();
+        }
+
+        function setupEventListeners() {
+            // Collaborative editor
+            $('#collaborativeEditor').on('input', function() {
+                handleTextChange();
+                markUnsaved();
+            });
+
+            // AI input
+            $('#aiInput').on('keypress', function(e) {
+                if (e.which === 13) {
+                    sendAiMessage();
+                }
+            });
+
+            // Invite form
+            $('#inviteForm').on('submit', function(e) {
+                e.preventDefault();
+                sendInvitations();
+            });
+
+            // Language selector
+            $('#languageSelect').change(function() {
+                translateDocument($(this).val());
+            });
+        }
+
+        function connectWebSocket() {
+            // WebSocket connection placeholder
+            // In a real implementation, this would connect to your WebSocket server
+            try {
+                // Simulated WebSocket connection
+                setTimeout(() => {
+                    isConnected = true;
+                    updateConnectionStatus(true);
+                    showNotification('Connected to collaboration server', 'success');
+                }, 1000);
+
+                // Simulate periodic connection checks
+                setInterval(() => {
+                    // Simulate occasional disconnections for demo
+                    const random = Math.random();
+                    if (random < 0.05 && isConnected) {
+                        isConnected = false;
+                        updateConnectionStatus(false);
+                        showNotification('Connection lost. Attempting to reconnect...', 'warning');
+                        
+                        // Simulate reconnection
+                        setTimeout(() => {
+                            isConnected = true;
+                            updateConnectionStatus(true);
+                            showNotification('Reconnected to collaboration server', 'success');
+                        }, 3000);
+                    }
+                }, 10000);
+
+            } catch (error) {
+                console.error('WebSocket connection failed:', error);
+                updateConnectionStatus(false);
+            }
+        }
+
+        function updateConnectionStatus(connected) {
+            const statusElement = $('#connectionStatus');
+            const textElement = $('#connectionText');
+            
+            if (connected) {
+                statusElement.removeClass('disconnected').addClass('connected');
+                textElement.text('Connected');
+            } else {
+                statusElement.removeClass('connected').addClass('disconnected');
+                textElement.text('Reconnecting...');
+            }
+        }
+
+        function loadCollaborationData() {
+            // Load participants
+            loadParticipants();
+            
+            // Load activity feed
+            loadActivityFeed();
+            
+            // Load version history
+            loadVersionHistory();
+            
+            // Load document content (if continuing existing document)
+            loadDocument();
+        }
+
+        function loadParticipants() {
+            $.ajax({
+                url: '/api/collaboration/participants',
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                success: function(data) {
+                    participants = data.participants || [];
+                    displayParticipants();
+                },
+                error: function() {
+                    // Fallback with dummy data
+                    participants = getDummyParticipants();
+                    displayParticipants();
+                }
+            });
+        }
+
+        function getDummyParticipants() {
+            return [
+                {
+                    id: '1',
+                    name: 'You',
+                    email: currentUser?.email || 'user@example.com',
+                    avatar: currentUser?.picture || 'https://via.placeholder.com/36x36/4facfe/ffffff?text=U',
+                    status: 'online',
+                    role: 'editor',
+                    cursor: { x: 0, y: 0 }
+                },
+                {
+                    id: '2',
+                    name: 'Dr. Sarah Chen',
+                    email: 'sarah.chen@polyu.edu.hk',
+                    avatar: 'https://via.placeholder.com/36x36/f093fb/ffffff?text=SC',
+                    status: 'online',
+                    role: 'editor',
+                    cursor: { x: 120, y: 45 }
+                },
+                {
+                    id: '3',
+                    name: 'AI Assistant',
+                    email: 'ai@hulab.polyu.edu.hk',
+                    avatar: 'https://via.placeholder.com/36x36/22c55e/ffffff?text=🤖',
+                    status: 'online',
+                    role: 'assistant',
+                    cursor: null
+                },
+                {
+                    id: '4',
+                    name: 'Lisa Wang',
+                    email: 'lisa.wang@student.polyu.edu.hk',
+                    avatar: 'https://via.placeholder.com/36x36/764ba2/ffffff?text=LW',
+                    status: 'away',
+                    role: 'viewer',
+                    cursor: null
+                }
+            ];
+        }
+
+        function displayParticipants() {
+            const container = $('#participantsList');
+            const html = participants.map(participant => `
+                <div class="participant-item">
+                    <div class="participant-avatar">
+                        <img src="${participant.avatar}" alt="${participant.name}" style="width:100%;height:100%;border-radius:50%;">
+                        <div class="status-indicator status-${participant.status}"></div>
+                    </div>
+                    <div class="participant-info">
+                        <div class="participant-name">${participant.name}</div>
+                        <div class="participant-role">${participant.role}</div>
+                    </div>
+                    <div class="participant-actions">
+                        ${participant.id !== '1' ? `
+                            <button class="action-btn" onclick="chatWithParticipant('${participant.id}')" title="Chat">💬</button>
+                            <button class="action-btn" onclick="viewParticipantCursor('${participant.id}')" title="Follow">👁️</button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+            
+            container.html(html);
+
+            // Update participants count
+            $('.card-title').first().text(`Participants (${participants.length})`);
+        }
+
+        function loadActivityFeed() {
+            const activities = [
+                {
+                    icon: '✏️',
+                    text: 'Sarah Chen edited paragraph 3',
+                    time: '2 min ago'
+                },
+                {
+                    icon: '🤖',
+                    text: 'AI suggested grammar improvements',
+                    time: '5 min ago'
+                },
+                {
+                    icon: '👥',
+                    text: 'Lisa Wang joined the document',
+                    time: '8 min ago'
+                },
+                {
+                    icon: '💾',
+                    text: 'Document auto-saved',
+                    time: '10 min ago'
+                }
+            ];
+
+            const html = activities.map(activity => `
+                <div class="activity-item">
+                    <div class="activity-icon">${activity.icon}</div>
+                    <div class="activity-text">${activity.text}</div>
+                    <div class="activity-time">${activity.time}</div>
+                </div>
+            `).join('');
+
+            $('#activityFeed').html(html);
+        }
+
+        function loadVersionHistory() {
+            const versions = [
+                {
+                    title: 'Current version',
+                    author: 'You',
+                    time: 'now',
+                    changes: 'Active editing'
+                },
+                {
+                    title: 'Auto-save #23',
+                    author: 'System',
+                    time: '10 min ago',
+                    changes: '15 characters added'
+                },
+                {
+                    title: 'Draft revision',
+                    author: 'Sarah Chen',
+                    time: '1 hour ago',
+                    changes: 'Structure improvements'
+                },
+                {
+                    title: 'Initial draft',
+                    author: 'You',
+                    time: '2 hours ago',
+                    changes: 'Document created'
+                }
+            ];
+
+            const html = versions.map((version, index) => `
+                <div class="version-item" onclick="loadVersion(${index})">
+                    <div class="version-info">
+                        <div class="version-title">${version.title}</div>
+                        <div class="version-meta">${version.author} • ${version.time}</div>
+                    </div>
+                    <div class="version-actions">
+                        ${index > 0 ? `<button class="action-btn" onclick="restoreVersion(${index})" title="Restore">↶</button>` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            $('#versionHistory').html(html);
+        }
+
+        function loadDocument() {
+            // In a real implementation, this would load the document from the server
+            // For now, we'll leave the placeholder text in the editor
+        }
+
+        function handleTextChange() {
+            // Simulate real-time collaboration
+            if (isConnected) {
+                // In a real implementation, this would send changes via WebSocket
+                broadcastChanges();
+            }
+        }
+
+        function broadcastChanges() {
+            // Placeholder for WebSocket message sending
+            // This would typically send cursor position, text changes, etc.
+            
+            // Simulate other users' cursors moving
+            simulateCollaborativeCursors();
+        }
+
+        function simulateCollaborativeCursors() {
+            // Add some visual collaboration indicators
+            const cursorsContainer = $('#collaborationCursors');
+            
+            // Clear existing cursors
+            cursorsContainer.empty();
+            
+            // Add cursors for online participants (excluding current user and AI)
+            participants.filter(p => p.status === 'online' && p.id !== '1' && p.role !== 'assistant').forEach(participant => {
+                if (participant.cursor) {
+                    const cursor = $(`<div class="user-cursor" data-user="${participant.name}"></div>`);
+                    cursor.css({
+                        left: participant.cursor.x + 'px',
+                        top: participant.cursor.y + 'px',
+                        backgroundColor: getParticipantColor(participant.id)
+                    });
+                    cursorsContainer.append(cursor);
+                }
+            });
+        }
+
+        function getParticipantColor(participantId) {
+            const colors = ['#4facfe', '#f093fb', '#764ba2', '#22c55e', '#f59e0b'];
+            return colors[parseInt(participantId) % colors.length];
+        }
+
+        function setupAutoSave() {
+            setInterval(() => {
+                if (isConnected) {
+                    autoSaveDocument();
+                }
+            }, 30000); // Auto-save every 30 seconds
+        }
+
+        function autoSaveDocument() {
+            const content = $('#collaborativeEditor').val();
+            
+            $.ajax({
+                url: '/api/collaboration/autosave',
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify({
+                    content: content,
+                    timestamp: new Date().toISOString()
+                }),
+                success: function() {
+                    $('#autoSaveStatus').text('Saved');
+                    $('#autoSaveStatus').css('color', '#22c55e');
+                },
+                error: function() {
+                    $('#autoSaveStatus').text('Error');
+                    $('#autoSaveStatus').css('color', '#ef4444');
+                }
+            });
+        }
+
+        function markUnsaved() {
+            $('#autoSaveStatus').text('Saving...');
+            $('#autoSaveStatus').css('color', '#f59e0b');
+        }
+
+        function sendAiMessage() {
+            const input = $('#aiInput');
+            const message = input.val().trim();
+            
+            if (!message) return;
+
+            // Add user message to chat
+            addAiMessage(message, true);
+            input.val('');
+
+            // Simulate AI response
+            setTimeout(() => {
+                const aiResponse = generateAiResponse(message);
+                addAiMessage(aiResponse, false);
+            }, 1000);
+        }
+
+        function addAiMessage(message, isUser) {
+            const chat = $('#aiChat');
+            const messageHtml = `
+                <div class="ai-message ${isUser ? 'user' : ''}">
+                    <div class="message-avatar">${isUser ? currentUser?.name?.charAt(0) || 'U' : '🤖'}</div>
+                    <div class="message-content">${message}</div>
+                </div>
+            `;
+            
+            chat.append(messageHtml);
+            chat.scrollTop(chat[0].scrollHeight);
+        }
+
+        function generateAiResponse(userMessage) {
+            const responses = {
+                'help': "I can assist you with writing, research, analysis, and more. What specific area would you like help with?",
+                'research': "I can help you find relevant sources, fact-check information, and organize your research. What topic are you working on?",
+                'writing': "I can help improve your writing style, grammar, structure, and clarity. Would you like me to review a specific section?",
+                'translate': "I can help translate content or adapt it for different audiences. Which language or style would you prefer?",
+                'summary': "I can create summaries of your content or external sources. What would you like me to summarize?",
+                'default': "I understand you'd like assistance. I can help with research, writing, analysis, translations, and more. Could you be more specific about what you need?"
+            };
+
+            const lowerMessage = userMessage.toLowerCase();
+            for (let key in responses) {
+                if (lowerMessage.includes(key)) {
+                    return responses[key];
+                }
+            }
+            
+            return responses.default;
+        }
+
+        function switchWorkspace(workspace) {
+            // Placeholder for workspace switching logic
+            showNotification(`Switched to ${workspace} workspace`, 'info');
+        }
+
+        function inviteParticipants() {
+            $('#inviteModal').addClass('active');
+        }
+
+        function closeInviteModal() {
+            $('#inviteModal').removeClass('active');
+        }
+
+        function sendInvitations() {
+            const emails = $('#inviteEmails').val();
+            const permission = $('#permissionLevel').val();
+            const message = $('#inviteMessage').val();
+
+            if (!emails.trim()) {
+                showNotification('Please enter at least one email address', 'error');
+                return;
+            }
+
+            $.ajax({
+                url: '/api/collaboration/invite',
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify({
+                    emails: emails.split(/[,\n]/).map(e => e.trim()).filter(e => e),
+                    permission: permission,
+                    message: message
+                }),
+                success: function(data) {
+                    showNotification(`Invitations sent to ${data.count} recipients`, 'success');
+                    closeInviteModal();
+                    $('#inviteForm')[0].reset();
+                },
+                error: function() {
+                    showNotification('Failed to send invitations. Please try again.', 'error');
+                }
+            });
+        }
+
+        function saveDocument() {
+            const content = $('#collaborativeEditor').val();
+            
+            $.ajax({
+                url: '/api/collaboration/save',
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify({
+                    content: content
+                }),
+                success: function() {
+                    showNotification('Document saved successfully', 'success');
+                },
+                error: function() {
+                    showNotification('Failed to save document', 'error');
+                }
+            });
+        }
+
+        function shareDocument() {
+            const shareUrl = `${window.location.origin}/collaboration.html?doc=${Date.now()}`;
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                showNotification('Share link copied to clipboard!', 'success');
+            }).catch(() => {
+                showNotification('Failed to copy share link', 'error');
+            });
+        }
+
+        function translateDocument(language) {
+            if (language === 'en') return;
+            
+            showNotification(`Translating document to ${language}...`, 'info');
+            // Placeholder for translation functionality
+            setTimeout(() => {
+                showNotification('Translation completed', 'success');
+            }, 2000);
+        }
+
+        function chatWithParticipant(participantId) {
+            const participant = participants.find(p => p.id === participantId);
+            showNotification(`Direct chat with ${participant.name} coming soon!`, 'info');
+        }
+
+        function viewParticipantCursor(participantId) {
+            const participant = participants.find(p => p.id === participantId);
+            showNotification(`Following ${participant.name}'s cursor`, 'info');
+        }
+
+        function loadVersion(index) {
+            showNotification(`Loading version ${index + 1}`, 'info');
+        }
+
+        function restoreVersion(index) {
+            if (confirm('Are you sure you want to restore this version? Current changes will be saved as a new version.')) {
+                showNotification(`Restored version ${index + 1}`, 'success');
+            }
+        }
+
+        function toggleVersionHistory() {
+            showNotification('Version history panel toggled', 'info');
+        }
+
+        // Initialize animations and start collaboration
+        initializeAnimations();
+    </script>
+</body>
+</html>

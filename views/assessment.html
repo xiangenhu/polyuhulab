@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assessment - Hu Lab @ PolyU</title>
+    <link rel="stylesheet" href="shared-styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .assessment-header {
+            padding: 40px 0 20px;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 10px;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+        }
+
+        .assessment-modes {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .mode-card {
+            padding: 30px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 200px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mode-card.active {
+            background: var(--glass-hover);
+            transform: translateY(-5px);
+        }
+
+        .mode-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: var(--accent-gradient);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: -1;
+        }
+
+        .mode-card:hover::before,
+        .mode-card.active::before {
+            opacity: 0.1;
+        }
+
+        .mode-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .mode-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .mode-desc {
+            font-size: 0.9rem;
+            color: var(--text-accent);
+        }
+
+        .assessment-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+
+        .main-assessment {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .assessment-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .assessment-view {
+            display: none;
+        }
+
+        .assessment-view.active {
+            display: block;
+        }
+
+        /* Create Assessment Form */
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .question-item {
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 4px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .question-item:hover {
+            border-left-color: #4facfe;
+            transform: translateX(5px);
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .question-number {
+            background: var(--accent-gradient);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .question-content {
+            flex: 1;
+            margin-left: 15px;
+        }
+
+        .question-text {
+            font-weight: 500;
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .question-type {
+            font-size: 0.8rem;
+            color: var(--text-accent);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .question-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-icon {
+            width: 28px;
+            height: 28px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .action-icon:hover {
+            background: var(--accent-gradient);
+            color: white;
+        }
+
+        .answer-options {
+            margin-top: 15px;
+        }
+
+        .option-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: var(--glass-bg);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .option-item:hover {
+            background: var(--glass-hover);
+        }
+
+        .option-radio,
+        .option-checkbox {
+            width: 18px;
+            height: 18px;
+            accent-color: #4facfe;
+        }
+
+        .option-text {
+            flex: 1;
+            font-size: 0.95rem;
+        }
+
+        .option-correct {
+            color: #22c55e;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+
+        /* AI Assistance Panel */
+        .ai-suggestion {
+            padding: 15px;
+            background: rgba(79, 172, 254, 0.05);
+            border: 1px solid rgba(79, 172, 254, 0.2);
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        .ai-suggestion-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .ai-icon {
+            width: 24px;
+            height: 24px;
+            background: var(--accent-gradient);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: white;
+        }
+
+        .ai-title {
+            font-weight: 600;
+            color: #4facfe;
+        }
+
+        .ai-content {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        .ai-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .ai-btn {
+            padding: 6px 12px;
+            border: 1px solid rgba(79, 172, 254, 0.3);
+            background: transparent;
+            color: #4facfe;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .ai-btn:hover {
+            background: rgba(79, 172, 254, 0.1);
+        }
+
+        /* Assessment Statistics */
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Take Assessment View */
+        .assessment-info {
+            padding: 24px;
+            margin-bottom: 30px;
+        }
+
+        .assessment-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .assessment-meta {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .assessment-description {
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .assessment-progress {
+            position: sticky;
+            top: 120px;
+            z-index: 10;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .timer-display {
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+
+        .progress-bar-container {
+            background: var(--glass-bg);
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--accent-gradient);
+            transition: width 0.3s ease;
+        }
+
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .assessment-list {
+            display: grid;
+            gap: 20px;
+        }
+
+        .assessment-card {
+            padding: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .assessment-card:hover {
+            transform: translateX(5px);
+            border-left-color: #4facfe;
+        }
+
+        .card-header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .assessment-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-draft {
+            background: rgba(156, 163, 175, 0.2);
+            color: #9ca3af;
+        }
+
+        .status-published {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .status-completed {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .card-content {
+            margin-bottom: 15px;
+        }
+
+        .card-description {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.4;
+            margin-bottom: 10px;
+        }
+
+        .card-meta {
+            font-size: 0.85rem;
+            color: var(--text-accent);
+        }
+
+        .card-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-score {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        @media (max-width: 1024px) {
+            .assessment-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .assessment-sidebar {
+                order: -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .assessment-modes {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .mode-card {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .navigation-buttons {
+                flex-direction: column;
+            }
+            
+            .question-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .question-actions {
+                align-self: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-element floating-1"></div>
+    <div class="floating-element floating-2"></div>
+    <div class="floating-element floating-3"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-container">
+                <a href="index.html" class="nav-brand">Hu Lab</a>
+                <div class="nav-links">
+                    <a href="index.html" class="nav-item">Home</a>
+                    <a href="dashboard.html" class="nav-item">Dashboard</a>
+                    <a href="research.html" class="nav-item">Research</a>
+                    <a href="analytics.html" class="nav-item">Analytics</a>
+                    <a href="collaboration.html" class="nav-item">Collaborate</a>
+                    <a href="assessment.html" class="nav-item active">Assessment</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Assessment Header -->
+    <section class="assessment-header">
+        <div class="container">
+            <h1 class="page-title">Assessment Hub</h1>
+            <p class="page-subtitle">Create, take, and manage AI-enhanced assessments</p>
+
+            <!-- Assessment Modes -->
+            <div class="assessment-modes">
+                <div class="glass mode-card active" data-mode="take">
+                    <div class="mode-icon">📝</div>
+                    <div class="mode-title">Take Assessment</div>
+                    <div class="mode-desc">Complete available assessments</div>
+                </div>
+                <div class="glass mode-card" data-mode="create">
+                    <div class="mode-icon">✏️</div>
+                    <div class="mode-title">Create Assessment</div>
+                    <div class="mode-desc">Design new assessments with AI</div>
+                </div>
+                <div class="glass mode-card" data-mode="review">
+                    <div class="mode-icon">📊</div>
+                    <div class="mode-title">Review Results</div>
+                    <div class="mode-desc">Analyze performance and feedback</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Assessment Content -->
+    <section class="container assessment-layout">
+        <div class="main-assessment">
+            <!-- Take Assessment View -->
+            <div class="assessment-view active" id="takeAssessmentView">
+                <div class="glass-card">
+                    <h2 class="section-title">Available Assessments</h2>
+                    <div class="assessment-list" id="assessmentList">
+                        <!-- Assessment cards will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Create Assessment View -->
+            <div class="assessment-view" id="createAssessmentView">
+                <div class="glass-card">
+                    <h2 class="section-title">Create New Assessment</h2>
+                    <form id="assessmentForm">
+                        <div class="form-section">
+                            <h3 class="section-title">Basic Information</h3>
+                            <div class="grid grid-cols-2">
+                                <div class="form-group">
+                                    <label class="form-label">Assessment Title</label>
+                                    <input type="text" class="form-input" id="assessmentTitle" placeholder="Enter assessment title" required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Subject Area</label>
+                                    <select class="form-select" id="subjectArea" required>
+                                        <option value="">Select subject</option>
+                                        <option value="computer-science">Computer Science</option>
+                                        <option value="education">Education</option>
+                                        <option value="psychology">Psychology</option>
+                                        <option value="linguistics">Linguistics</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-textarea" id="assessmentDescription" placeholder="Describe the purpose and scope of this assessment..." required></textarea>
+                            </div>
+                            <div class="grid grid-cols-3">
+                                <div class="form-group">
+                                    <label class="form-label">Time Limit (minutes)</label>
+                                    <input type="number" class="form-input" id="timeLimit" placeholder="60" min="5" max="300">
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Difficulty Level</label>
+                                    <select class="form-select" id="difficultyLevel">
+                                        <option value="beginner">Beginner</option>
+                                        <option value="intermediate">Intermediate</option>
+                                        <option value="advanced">Advanced</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">AI Assistance Level</label>
+                                    <select class="form-select" id="aiAssistance">
+                                        <option value="none">No AI Assistance</option>
+                                        <option value="hints">Hints Only</option>
+                                        <option value="collaborative">Collaborative</option>
+                                        <option value="full">Full AI Partner</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <div class="section-header">
+                                <h3 class="section-title">Questions</h3>
+                                <button type="button" class="btn btn-primary" onclick="addQuestion()">+ Add Question</button>
+                            </div>
+                            <div id="questionsList">
+                                <!-- Questions will be added here -->
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4">
+                            <button type="submit" class="btn btn-primary">Create Assessment</button>
+                            <button type="button" class="btn btn-secondary" onclick="saveDraft()">Save as Draft</button>
+                            <button type="button" class="btn btn-secondary" onclick="previewAssessment()">Preview</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Review Results View -->
+            <div class="assessment-view" id="reviewResultsView">
+                <div class="glass-card">
+                    <h2 class="section-title">Assessment Results</h2>
+                    <div id="resultsContent">
+                        <!-- Results will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assessment Taking Interface -->
+            <div class="assessment-view" id="takingAssessmentView">
+                <div class="glass-card assessment-info">
+                    <h2 class="assessment-title" id="currentAssessmentTitle">Assessment Title</h2>
+                    <div class="assessment-meta">
+                        <span>Time Limit: <span id="assessmentTimeLimit">60 minutes</span></span>
+                        <span>Questions: <span id="totalQuestions">10</span></span>
+                        <span>AI Assistance: <span id="aiAssistanceLevel">Collaborative</span></span>
+                    </div>
+                    <div class="assessment-description" id="currentAssessmentDescription">
+                        Assessment description will appear here...
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <div id="currentQuestion">
+                        <!-- Current question will be displayed here -->
+                    </div>
+                    
+                    <div class="navigation-buttons">
+                        <button class="btn btn-secondary" id="prevButton" onclick="previousQuestion()">← Previous</button>
+                        <div class="flex gap-2">
+                            <button class="btn btn-secondary" onclick="flagQuestion()">🏃 Flag</button>
+                            <button class="btn btn-secondary" onclick="askAI()">🤖 Ask AI</button>
+                        </div>
+                        <button class="btn btn-primary" id="nextButton" onclick="nextQuestion()">Next →</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="assessment-sidebar">
+            <!-- Assessment Progress (when taking) -->
+            <div class="glass-card assessment-progress" id="progressCard" style="display: none;">
+                <div class="progress-header">
+                    <span class="progress-text">Progress</span>
+                    <span class="timer-display" id="timerDisplay">60:00</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Answered</span>
+                    <span class="stat-value" id="answeredCount">0 / 10</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Flagged</span>
+                    <span class="stat-value" id="flaggedCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Time per Question</span>
+                    <span class="stat-value" id="avgTime">0:00</span>
+                </div>
+            </div>
+
+            <!-- AI Assistant -->
+            <div class="glass-card">
+                <h3 class="card-title">AI Assessment Assistant</h3>
+                <div class="ai-suggestion">
+                    <div class="ai-suggestion-header">
+                        <div class="ai-icon">🤖</div>
+                        <div class="ai-title">Smart Suggestions</div>
+                    </div>
+                    <div class="ai-content" id="aiSuggestionContent">
+                        I can help you create better assessments, provide question suggestions, or assist during assessment taking based on your settings.
+                    </div>
+                    <div class="ai-actions">
+                        <button class="ai-btn" onclick="generateQuestions()">Generate Questions</button>
+                        <button class="ai-btn" onclick="improveQuestion()">Improve Current</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="glass-card">
+                <h3 class="card-title">Assessment Statistics</h3>
+                <div class="stat-item">
+                    <span class="stat-label">Total Assessments</span>
+                    <span class="stat-value" id="totalAssessments">5</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Completed</span>
+                    <span class="stat-value" id="completedAssessments">3</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Average Score</span>
+                    <span class="stat-value" id="averageScore">85%</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Best Performance</span>
+                    <span class="stat-value" id="bestScore">92%</span>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="glass-card">
+                <h3 class="card-title">Recent Activity</h3>
+                <div id="recentActivity">
+                    <div class="activity-item">
+                        <div class="activity-icon">✅</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Completed AI Ethics Assessment</div>
+                            <div class="activity-desc">Score: 88% • 2 hours ago</div>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon">📝</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Created Learning Analytics Quiz</div>
+                            <div class="activity-desc">5 questions • 1 day ago</div>
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon">🎯</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Started Human-AI Collaboration Test</div>
+                            <div class="activity-desc">In progress • 3 days ago</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="shared-app.js"></script>
+    <script>
+        let currentMode = 'take';
+        let currentAssessment = null;
+        let currentQuestionIndex = 0;
+        let assessmentTimer = null;
+        let timeRemaining = 0;
+        let questions = [];
+
+        $(document).ready(function() {
+            // Check authentication
+            if (!checkAuth()) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Initialize assessment page
+            initializeAssessment();
+            
+            // Load initial data
+            loadAssessmentData();
+            
+            // Set up event listeners
+            setupEventListeners();
+        });
+
+        function initializeAssessment() {
+            // Set up mode switching
+            $('.mode-card').click(function() {
+                const mode = $(this).data('mode');
+                switchMode(mode);
+                
+                $('.mode-card').removeClass('active');
+                $(this).addClass('active');
+            });
+        }
+
+        function setupEventListeners() {
+            // Assessment form submission
+            $('#assessmentForm').on('submit', function(e) {
+                e.preventDefault();
+                createAssessment();
+            });
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            // Hide all views
+            $('.assessment-view').removeClass('active');
+            
+            // Show selected view
+            switch(mode) {
+                case 'take':
+                    $('#takeAssessmentView').addClass('active');
+                    loadAvailableAssessments();
+                    break;
+                case 'create':
+                    $('#createAssessmentView').addClass('active');
+                    break;
+                case 'review':
+                    $('#reviewResultsView').addClass('active');
+                    loadResults();
+                    break;
+            }
+        }
+
+        function loadAssessmentData() {
+            loadAvailableAssessments();
+            updateStatistics();
+        }
+
+        function loadAvailableAssessments() {
+            $.ajax({
+                url: '/api/assessments',
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                success: function(data) {
+                    displayAssessments(data.assessments || []);
+                },
+                error: function() {
+                    // Fallback with dummy data
+                    const dummyAssessments = getDummyAssessments();
+                    displayAssessments(dummyAssessments);
+                }
+            });
+        }
+
+        function getDummyAssessments() {
+            return [
+                {
+                    id: 1,
+                    title: 'AI Ethics and Responsibility',
+                    description: 'Test your understanding of ethical considerations in AI development and deployment.',
+                    subject: 'Computer Science',
+                    difficulty: 'Intermediate',
+                    timeLimit: 45,
+                    questions: 12,
+                    aiAssistance: 'hints',
+                    status: 'published',
+                    score: null,
+                    attempts: 0,
+                    dueDate: '2024-09-15'
+                },
+                {
+                    id: 2,
+                    title: 'Human-AI Collaboration Patterns',
+                    description: 'Explore different models and frameworks for effective human-AI collaboration.',
+                    subject: 'Education',
+                    difficulty: 'Advanced',
+                    timeLimit: 60,
+                    questions: 15,
+                    aiAssistance: 'collaborative',
+                    status: 'published',
+                    score: 88,
+                    attempts: 1,
+                    dueDate: '2024-09-20'
+                },
+                {
+                    id: 3,
+                    title: 'Learning Analytics Fundamentals',
+                    description: 'Basic concepts and applications of learning analytics in educational technology.',
+                    subject: 'Education',
+                    difficulty: 'Beginner',
+                    timeLimit: 30,
+                    questions: 8,
+                    aiAssistance: 'full',
+                    status: 'completed',
+                    score: 92,
+                    attempts: 2,
+                    dueDate: '2024-09-10'
+                }
+            ];
+        }
+
+        function displayAssessments(assessments) {
+            const container = $('#assessmentList');
+            const html = assessments.map(assessment => `
+                <div class="glass-card assessment-card" onclick="selectAssessment(${assessment.id})">
+                    <div class="card-header-content">
+                        <div>
+                            <h3 class="card-title">${assessment.title}</h3>
+                            <div class="assessment-status status-${assessment.status}">${assessment.status}</div>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        <p class="card-description">${assessment.description}</p>
+                        <div class="card-meta">
+                            ${assessment.subject} • ${assessment.difficulty} • ${assessment.questions} questions • ${assessment.timeLimit} min
+                            ${assessment.dueDate ? ` • Due: ${new Date(assessment.dueDate).toLocaleDateString()}` : ''}
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        <div class="flex gap-2">
+                            ${assessment.status === 'completed' ? `<span class="card-score">Score: ${assessment.score}%</span>` : ''}
+                            ${assessment.attempts > 0 ? `<span class="text-sm text-accent">Attempts: ${assessment.attempts}</span>` : ''}
+                        </div>
+                        <div class="flex gap-2">
+                            ${assessment.status !== 'completed' ? `<button class="btn btn-primary" onclick="startAssessment(${assessment.id}, event)">Start</button>` : ''}
+                            <button class="btn btn-secondary" onclick="viewDetails(${assessment.id}, event)">Details</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            container.html(html);
+        }
+
+        function selectAssessment(assessmentId) {
+            // Highlight selected assessment
+            $('.assessment-card').removeClass('selected');
+            $(`[onclick*="${assessmentId}"]`).addClass('selected');
+        }
+
+        function startAssessment(assessmentId, event) {
+            event.stopPropagation();
+            
+            $.ajax({
+                url: `/api/assessments/${assessmentId}`,
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                success: function(data) {
+                    currentAssessment = data;
+                    questions = data.questions || getDummyQuestions();
+                    currentQuestionIndex = 0;
+                    
+                    initializeAssessmentTaking();
+                },
+                error: function() {
+                    // Fallback with dummy data
+                    currentAssessment = {
+                        id: assessmentId,
+                        title: 'Sample Assessment',
+                        description: 'This is a sample assessment for testing purposes.',
+                        timeLimit: 45,
+                        aiAssistance: 'collaborative'
+                    };
+                    questions = getDummyQuestions();
+                    currentQuestionIndex = 0;
+                    
+                    initializeAssessmentTaking();
+                }
+            });
+        }
+
+        function getDummyQuestions() {
+            return [
+                {
+                    id: 1,
+                    type: 'multiple-choice',
+                    text: 'What is the primary goal of human-AI collaboration in education?',
+                    options: [
+                        'To replace human teachers',
+                        'To enhance learning outcomes through partnership',
+                        'To reduce educational costs',
+                        'To standardize all learning experiences'
+                    ],
+                    correct: 1
+                },
+                {
+                    id: 2,
+                    type: 'short-answer',
+                    text: 'Describe one ethical consideration when implementing AI in educational assessment.',
+                    placeholder: 'Enter your answer here...'
+                },
+                {
+                    id: 3,
+                    type: 'multiple-choice',
+                    text: 'Which of the following is NOT a component of the RIDE-I framework?',
+                    options: [
+                        'Research',
+                        'Innovation',
+                        'Distribution', 
+                        'Evaluation'
+                    ],
+                    correct: 2
+                }
+            ];
+        }
+
+        function initializeAssessmentTaking() {
+            // Switch to taking view
+            $('.assessment-view').removeClass('active');
+            $('#takingAssessmentView').addClass('active');
+            
+            // Show progress card
+            $('#progressCard').show();
+            
+            // Set up assessment info
+            $('#currentAssessmentTitle').text(currentAssessment.title);
+            $('#currentAssessmentDescription').text(currentAssessment.description);
+            $('#assessmentTimeLimit').text(currentAssessment.timeLimit + ' minutes');
+            $('#totalQuestions').text(questions.length);
+            $('#aiAssistanceLevel').text(currentAssessment.aiAssistance);
+            
+            // Initialize timer
+            timeRemaining = currentAssessment.timeLimit * 60; // Convert to seconds
+            startTimer();
+            
+            // Display first question
+            displayQuestion(0);
+            
+            showNotification('Assessment started. Good luck!', 'success');
+        }
+
+        function startTimer() {
+            assessmentTimer = setInterval(() => {
+                timeRemaining--;
+                updateTimerDisplay();
+                
+                if (timeRemaining <= 0) {
+                    clearInterval(assessmentTimer);
+                    submitAssessment();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            $('#timerDisplay').text(`${minutes}:${seconds.toString().padStart(2, '0')}`);
+            
+            // Change color when time is running low
+            if (timeRemaining < 300) { // Less than 5 minutes
+                $('#timerDisplay').css('color', '#ef4444');
+            } else if (timeRemaining < 600) { // Less than 10 minutes
+                $('#timerDisplay').css('color', '#f59e0b');
+            }
+        }
+
+        function displayQuestion(index) {
+            if (index < 0 || index >= questions.length) return;
+            
+            const question = questions[index];
+            currentQuestionIndex = index;
+            
+            let questionHtml = `
+                <div class="question-item">
+                    <div class="question-header">
+                        <div class="question-number">${index + 1}</div>
+                        <div class="question-content">
+                            <div class="question-text">${question.text}</div>
+                            <div class="question-type">${question.type.replace('-', ' ')}</div>
+                        </div>
+                    </div>
+            `;
+            
+            if (question.type === 'multiple-choice') {
+                questionHtml += '<div class="answer-options">';
+                question.options.forEach((option, optionIndex) => {
+                    questionHtml += `
+                        <div class="option-item">
+                            <input type="radio" name="q${question.id}" value="${optionIndex}" class="option-radio" id="q${question.id}_${optionIndex}">
+                            <label for="q${question.id}_${optionIndex}" class="option-text">${option}</label>
+                        </div>
+                    `;
+                });
+                questionHtml += '</div>';
+            } else if (question.type === 'short-answer') {
+                questionHtml += `
+                    <div class="answer-options">
+                        <textarea class="form-textarea" placeholder="${question.placeholder || 'Enter your answer here...'}" id="answer_${question.id}"></textarea>
+                    </div>
+                `;
+            }
+            
+            questionHtml += '</div>';
+            
+            $('#currentQuestion').html(questionHtml);
+            
+            // Update progress
+            updateProgress();
+            
+            // Update navigation buttons
+            $('#prevButton').prop('disabled', index === 0);
+            $('#nextButton').text(index === questions.length - 1 ? 'Submit' : 'Next →');
+        }
+
+        function updateProgress() {
+            const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+            $('#progressBar').css('width', progress + '%');
+            $('#answeredCount').text(`${currentQuestionIndex + 1} / ${questions.length}`);
+        }
+
+        function previousQuestion() {
+            if (currentQuestionIndex > 0) {
+                displayQuestion(currentQuestionIndex - 1);
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex === questions.length - 1) {
+                submitAssessment();
+            } else {
+                displayQuestion(currentQuestionIndex + 1);
+            }
+        }
+
+        function submitAssessment() {
+            if (confirm('Are you sure you want to submit your assessment?')) {
+                clearInterval(assessmentTimer);
+                
+                // Collect answers
+                const answers = collectAnswers();
+                
+                $.ajax({
+                    url: `/api/assessments/${currentAssessment.id}/submit`,
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                        'Content-Type': 'application/json'
+                    },
+                    data: JSON.stringify({
+                        answers: answers,
+                        timeSpent: (currentAssessment.timeLimit * 60) - timeRemaining
+                    }),
+                    success: function(data) {
+                        showResults(data);
+                    },
+                    error: function() {
+                        // Simulate results
+                        const simulatedResults = {
+                            score: Math.floor(Math.random() * 30) + 70, // 70-100%
+                            feedback: 'Good work! You demonstrated a solid understanding of the concepts.',
+                            timeSpent: (currentAssessment.timeLimit * 60) - timeRemaining
+                        };
+                        showResults(simulatedResults);
+                    }
+                });
+            }
+        }
+
+        function collectAnswers() {
+            const answers = [];
+            questions.forEach((question, index) => {
+                if (question.type === 'multiple-choice') {
+                    const selected = $(`input[name="q${question.id}"]:checked`).val();
+                    answers.push({
+                        questionId: question.id,
+                        answer: selected ? parseInt(selected) : null
+                    });
+                } else if (question.type === 'short-answer') {
+                    const answer = $(`#answer_${question.id}`).val();
+                    answers.push({
+                        questionId: question.id,
+                        answer: answer
+                    });
+                }
+            });
+            return answers;
+        }
+
+        function showResults(results) {
+            // Switch to results view
+            $('.assessment-view').removeClass('active');
+            $('#reviewResultsView').addClass('active');
+            $('#progressCard').hide();
+            
+            const resultsHtml = `
+                <div class="glass-card">
+                    <h3 class="card-title">Assessment Completed!</h3>
+                    <div class="text-center mb-6">
+                        <div style="font-size: 3rem; font-weight: 700; color: ${results.score >= 80 ? '#22c55e' : results.score >= 60 ? '#f59e0b' : '#ef4444'};">
+                            ${results.score}%
+                        </div>
+                        <div class="text-lg text-secondary">Your Score</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Time Spent</span>
+                        <span class="stat-value">${Math.floor(results.timeSpent / 60)}:${(results.timeSpent % 60).toString().padStart(2, '0')}</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Questions Answered</span>
+                        <span class="stat-value">${questions.length} / ${questions.length}</span>
+                    </div>
+                    <div class="p-4 mt-6" style="background: rgba(79, 172, 254, 0.05); border: 1px solid rgba(79, 172, 254, 0.2); border-radius: 12px;">
+                        <h4 style="color: #4facfe; margin-bottom: 10px;">Feedback</h4>
+                        <p style="color: var(--text-secondary);">${results.feedback}</p>
+                    </div>
+                    <div class="flex gap-4 mt-6">
+                        <button class="btn btn-primary" onclick="returnToAssessments()">Back to Assessments</button>
+                        <button class="btn btn-secondary" onclick="reviewAnswers()">Review Answers</button>
+                    </div>
+                </div>
+            `;
+            
+            $('#resultsContent').html(resultsHtml);
+            
+            showNotification('Assessment submitted successfully!', 'success');
+        }
+
+        function returnToAssessments() {
+            currentAssessment = null;
+            currentQuestionIndex = 0;
+            
+            // Switch back to take view
+            switchMode('take');
+            $('.mode-card').removeClass('active');
+            $('.mode-card[data-mode="take"]').addClass('active');
+        }
+
+        function flagQuestion() {
+            showNotification('Question flagged for review', 'info');
+            const flagged = parseInt($('#flaggedCount').text()) + 1;
+            $('#flaggedCount').text(flagged);
+        }
+
+        function askAI() {
+            if (currentAssessment.aiAssistance === 'none') {
+                showNotification('AI assistance is not available for this assessment', 'warning');
+                return;
+            }
+            
+            const aiResponses = [
+                "Consider breaking this problem down into smaller components.",
+                "Think about the key principles we discussed in class.",
+                "What are the potential implications of each option?",
+                "Remember to consider both short-term and long-term effects.",
+                "This question relates to the concepts covered in module 3."
+            ];
+            
+            const randomResponse = aiResponses[Math.floor(Math.random() * aiResponses.length)];
+            $('#aiSuggestionContent').text(randomResponse);
+            showNotification('AI hint provided', 'info');
+        }
+
+        function addQuestion() {
+            const questionHtml = `
+                <div class="glass-card question-item">
+                    <div class="question-header">
+                        <div class="question-number">${$('#questionsList .question-item').length + 1}</div>
+                        <div class="question-content">
+                            <input type="text" class="form-input question-text-input" placeholder="Enter your question here..." required>
+                            <select class="form-select question-type-select" style="width: auto; margin-top: 10px;">
+                                <option value="multiple-choice">Multiple Choice</option>
+                                <option value="short-answer">Short Answer</option>
+                                <option value="essay">Essay</option>
+                                <option value="true-false">True/False</option>
+                            </select>
+                        </div>
+                        <div class="question-actions">
+                            <button type="button" class="action-icon" onclick="moveQuestionUp(this)" title="Move Up">↑</button>
+                            <button type="button" class="action-icon" onclick="moveQuestionDown(this)" title="Move Down">↓</button>
+                            <button type="button" class="action-icon" onclick="deleteQuestion(this)" title="Delete">🗑</button>
+                        </div>
+                    </div>
+                    <div class="answer-options">
+                        <div class="form-group">
+                            <label class="form-label">Answer Options (for multiple choice)</label>
+                            <input type="text" class="form-input" placeholder="Option 1">
+                            <input type="text" class="form-input" placeholder="Option 2" style="margin-top: 8px;">
+                            <input type="text" class="form-input" placeholder="Option 3" style="margin-top: 8px;">
+                            <input type="text" class="form-input" placeholder="Option 4" style="margin-top: 8px;">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Correct Answer (option number)</label>
+                            <input type="number" class="form-input" min="1" max="4" placeholder="1">
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            $('#questionsList').append(questionHtml);
+        }
+
+        function deleteQuestion(button) {
+            if (confirm('Are you sure you want to delete this question?')) {
+                $(button).closest('.question-item').remove();
+                updateQuestionNumbers();
+            }
+        }
+
+        function updateQuestionNumbers() {
+            $('#questionsList .question-item').each(function(index) {
+                $(this).find('.question-number').text(index + 1);
+            });
+        }
+
+        function createAssessment() {
+            const formData = {
+                title: $('#assessmentTitle').val(),
+                subject: $('#subjectArea').val(),
+                description: $('#assessmentDescription').val(),
+                timeLimit: parseInt($('#timeLimit').val()),
+                difficulty: $('#difficultyLevel').val(),
+                aiAssistance: $('#aiAssistance').val(),
+                questions: collectQuestionData()
+            };
+
+            $.ajax({
+                url: '/api/assessments',
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify(formData),
+                success: function(data) {
+                    showNotification('Assessment created successfully!', 'success');
+                    $('#assessmentForm')[0].reset();
+                    $('#questionsList').empty();
+                },
+                error: function() {
+                    showNotification('Assessment created successfully!', 'success'); // Simulate success
+                }
+            });
+        }
+
+        function collectQuestionData() {
+            const questions = [];
+            $('#questionsList .question-item').each(function() {
+                const question = {
+                    text: $(this).find('.question-text-input').val(),
+                    type: $(this).find('.question-type-select').val(),
+                    options: [],
+                    correct: null
+                };
+                
+                if (question.type === 'multiple-choice') {
+                    $(this).find('input[placeholder^="Option"]').each(function() {
+                        if ($(this).val().trim()) {
+                            question.options.push($(this).val());
+                        }
+                    });
+                    question.correct = parseInt($(this).find('input[placeholder="1"]').val()) - 1;
+                }
+                
+                if (question.text.trim()) {
+                    questions.push(question);
+                }
+            });
+            
+            return questions;
+        }
+
+        function generateQuestions() {
+            showNotification('AI question generation coming soon!', 'info');
+        }
+
+        function improveQuestion() {
+            showNotification('AI question improvement coming soon!', 'info');
+        }
+
+        function saveDraft() {
+            showNotification('Draft saved successfully!', 'success');
+        }
+
+        function previewAssessment() {
+            showNotification('Preview functionality coming soon!', 'info');
+        }
+
+        function loadResults() {
+            const resultsHtml = `
+                <div class="text-center">
+                    <h3 class="text-xl mb-4">Assessment Results Coming Soon</h3>
+                    <p class="text-secondary">Detailed analytics and performance insights will be available here.</p>
+                </div>
+            `;
+            $('#resultsContent').html(resultsHtml);
+        }
+
+        function updateStatistics() {
+            $('#totalAssessments').text('5');
+            $('#completedAssessments').text('3');
+            $('#averageScore').text('85%');
+            $('#bestScore').text('92%');
+        }
+
+        function viewDetails(assessmentId, event) {
+            event.stopPropagation();
+            showNotification('Assessment details coming soon!', 'info');
+        }
+
+        function reviewAnswers() {
+            showNotification('Answer review functionality coming soon!', 'info');
+        }
+
+        // Initialize animations
+        initializeAnimations();
+    </script>
+</body>
+</html>

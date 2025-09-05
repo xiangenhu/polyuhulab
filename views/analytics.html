@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - Hu Lab @ PolyU</title>
+    <link rel="stylesheet" href="shared-styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    <style>
+        .analytics-header {
+            padding: 40px 0 20px;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 10px;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+        }
+
+        .analytics-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .date-range-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .date-range-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .date-range-btn.active,
+        .date-range-btn:hover {
+            background: var(--accent-gradient);
+        }
+
+        .export-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .kpi-card {
+            text-align: center;
+            padding: 24px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .kpi-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: var(--secondary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .kpi-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .kpi-change {
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .kpi-change.positive {
+            color: #22c55e;
+        }
+
+        .kpi-change.negative {
+            color: #ef4444;
+        }
+
+        .kpi-change.neutral {
+            color: var(--text-accent);
+        }
+
+        .analytics-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .main-analytics {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .analytics-sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 20px;
+        }
+
+        .chart-small {
+            height: 250px;
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .chart-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .metric-selector {
+            padding: 6px 12px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--text-primary);
+            border-radius: 15px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .insights-panel {
+            padding: 20px;
+            background: rgba(79, 172, 254, 0.05);
+            border: 1px solid rgba(79, 172, 254, 0.2);
+            border-radius: 12px;
+        }
+
+        .insight-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(79, 172, 254, 0.1);
+        }
+
+        .insight-item:last-child {
+            border-bottom: none;
+        }
+
+        .insight-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .insight-content {
+            flex: 1;
+        }
+
+        .insight-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #4facfe;
+        }
+
+        .insight-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .data-table th {
+            background: var(--glass-bg);
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+        }
+
+        .data-table tbody tr:hover {
+            background: var(--glass-bg);
+        }
+
+        .trend-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .trend-up {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .trend-down {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .trend-stable {
+            background: rgba(156, 163, 175, 0.2);
+            color: #9ca3af;
+        }
+
+        .collaboration-metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .collaboration-metric {
+            text-align: center;
+            padding: 15px;
+            background: var(--glass-bg);
+            border-radius: 10px;
+        }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--text-primary);
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: var(--text-accent);
+        }
+
+        .filter-panel {
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-label {
+            font-weight: 500;
+            color: var(--text-secondary);
+            min-width: 80px;
+        }
+
+        .filter-select {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        @media (max-width: 1024px) {
+            .analytics-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .analytics-sidebar {
+                order: -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .analytics-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .date-range-selector {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .collaboration-metrics {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .kpi-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-label {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-element floating-1"></div>
+    <div class="floating-element floating-2"></div>
+    <div class="floating-element floating-3"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-container">
+                <a href="index.html" class="nav-brand">Hu Lab</a>
+                <div class="nav-links">
+                    <a href="index.html" class="nav-item">Home</a>
+                    <a href="dashboard.html" class="nav-item">Dashboard</a>
+                    <a href="research.html" class="nav-item">Research</a>
+                    <a href="analytics.html" class="nav-item active">Analytics</a>
+                    <a href="collaboration.html" class="nav-item">Collaborate</a>
+                    <a href="assessment.html" class="nav-item">Assessment</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Analytics Header -->
+    <section class="analytics-header">
+        <div class="container">
+            <h1 class="page-title">Learning Analytics Dashboard</h1>
+            <p class="page-subtitle">Insights into Human-AI Collaboration and Learning Outcomes</p>
+
+            <!-- Controls -->
+            <div class="glass analytics-controls">
+                <div class="date-range-selector">
+                    <span class="text-sm text-secondary">Time Range:</span>
+                    <button class="date-range-btn" data-range="7">7 Days</button>
+                    <button class="date-range-btn active" data-range="30">30 Days</button>
+                    <button class="date-range-btn" data-range="90">3 Months</button>
+                    <button class="date-range-btn" data-range="365">1 Year</button>
+                </div>
+                <div class="export-controls">
+                    <button class="btn btn-secondary" onclick="exportData('csv')">Export CSV</button>
+                    <button class="btn btn-secondary" onclick="exportData('pdf')">Export PDF</button>
+                    <button class="btn btn-primary" onclick="refreshData()">Refresh</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- KPI Cards -->
+    <section class="container">
+        <div class="kpi-grid">
+            <div class="glass-card kpi-card">
+                <div class="kpi-value" id="totalLearners">0</div>
+                <div class="kpi-label">Active Learners</div>
+                <div class="kpi-change positive" id="learnersChange">
+                    <span>↗</span> +12.5%
+                </div>
+            </div>
+            <div class="glass-card kpi-card">
+                <div class="kpi-value" id="engagementRate">0%</div>
+                <div class="kpi-label">Engagement Rate</div>
+                <div class="kpi-change positive" id="engagementChange">
+                    <span>↗</span> +8.3%
+                </div>
+            </div>
+            <div class="glass-card kpi-card">
+                <div class="kpi-value" id="completionRate">0%</div>
+                <div class="kpi-label">Task Completion</div>
+                <div class="kpi-change negative" id="completionChange">
+                    <span>↘</span> -2.1%
+                </div>
+            </div>
+            <div class="glass-card kpi-card">
+                <div class="kpi-value" id="collaborationScore">0</div>
+                <div class="kpi-label">AI Collab Score</div>
+                <div class="kpi-change positive" id="collaborationChange">
+                    <span>↗</span> +15.7%
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Analytics Content -->
+    <section class="container analytics-content">
+        <div class="main-analytics">
+            <!-- Learning Progress Chart -->
+            <div class="glass-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Learning Progress Over Time</h3>
+                    <div class="chart-actions">
+                        <select class="metric-selector" id="progressMetric">
+                            <option value="completion">Completion Rate</option>
+                            <option value="engagement">Engagement Score</option>
+                            <option value="collaboration">AI Collaboration</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="progressChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Human-AI Collaboration Analysis -->
+            <div class="glass-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Human-AI Collaboration Patterns</h3>
+                </div>
+                <div class="chart-container">
+                    <canvas id="collaborationChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Performance Distribution -->
+            <div class="glass-card">
+                <div class="chart-header">
+                    <h3 class="chart-title">Learning Outcome Distribution</h3>
+                </div>
+                <div class="chart-container chart-small">
+                    <canvas id="distributionChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Detailed Data Table -->
+            <div class="glass-card">
+                <h3 class="chart-title">Student Performance Details</h3>
+                <table class="data-table" id="performanceTable">
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Engagement</th>
+                            <th>AI Collaboration</th>
+                            <th>Completion Rate</th>
+                            <th>Trend</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="analytics-sidebar">
+            <!-- Filters -->
+            <div class="glass-card filter-panel">
+                <h3 class="section-title">Filters</h3>
+                <div class="filter-row">
+                    <label class="filter-label">Course:</label>
+                    <select class="form-select filter-select" id="courseFilter">
+                        <option value="all">All Courses</option>
+                        <option value="cs101">CS 101: Intro to AI</option>
+                        <option value="edu250">EDU 250: Learning Technologies</option>
+                        <option value="psych200">PSYCH 200: Cognitive Science</option>
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <label class="filter-label">Cohort:</label>
+                    <select class="form-select filter-select" id="cohortFilter">
+                        <option value="all">All Cohorts</option>
+                        <option value="fall2024">Fall 2024</option>
+                        <option value="summer2024">Summer 2024</option>
+                        <option value="spring2024">Spring 2024</option>
+                    </select>
+                </div>
+                <div class="filter-row">
+                    <label class="filter-label">AI Tool:</label>
+                    <select class="form-select filter-select" id="toolFilter">
+                        <option value="all">All Tools</option>
+                        <option value="writing-assistant">Writing Assistant</option>
+                        <option value="problem-solver">Problem Solver</option>
+                        <option value="research-helper">Research Helper</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary w-full" onclick="applyFilters()">Apply Filters</button>
+            </div>
+
+            <!-- AI Insights -->
+            <div class="glass-card">
+                <h3 class="section-title">AI Insights</h3>
+                <div class="insights-panel">
+                    <div class="insight-item">
+                        <div class="insight-icon">🎯</div>
+                        <div class="insight-content">
+                            <div class="insight-title">Optimal Collaboration</div>
+                            <div class="insight-desc">Students with 60-80% AI assistance show best learning outcomes</div>
+                        </div>
+                    </div>
+                    <div class="insight-item">
+                        <div class="insight-icon">📈</div>
+                        <div class="insight-content">
+                            <div class="insight-title">Engagement Peak</div>
+                            <div class="insight-desc">Highest engagement occurs on Tuesdays and Thursdays</div>
+                        </div>
+                    </div>
+                    <div class="insight-item">
+                        <div class="insight-icon">⚠️</div>
+                        <div class="insight-content">
+                            <div class="insight-title">Risk Group</div>
+                            <div class="insight-desc">15 students showing signs of over-reliance on AI</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Collaboration Metrics -->
+            <div class="glass-card">
+                <h3 class="section-title">Collaboration Metrics</h3>
+                <div class="collaboration-metrics">
+                    <div class="collaboration-metric">
+                        <div class="metric-value" id="avgQueries">45</div>
+                        <div class="metric-label">Avg AI Queries/Day</div>
+                    </div>
+                    <div class="collaboration-metric">
+                        <div class="metric-value" id="avgSessionTime">23m</div>
+                        <div class="metric-label">Avg Session Time</div>
+                    </div>
+                    <div class="collaboration-metric">
+                        <div class="metric-value" id="feedbackScore">4.2</div>
+                        <div class="metric-label">AI Feedback Score</div>
+                    </div>
+                    <div class="collaboration-metric">
+                        <div class="metric-value" id="improvementRate">78%</div>
+                        <div class="metric-label">Improvement Rate</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="glass-card">
+                <h3 class="section-title">Recent Activity</h3>
+                <div id="recentActivity">
+                    <div class="activity-item">
+                        <div class="activity-icon">📊</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Data sync completed</div>
+                            <div class="activity-desc">Updated learning analytics for 142 students</div>
+                        </div>
+                        <div class="activity-time">5 min ago</div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-icon">🎯</div>
+                        <div class="activity-content">
+                            <div class="activity-title">Performance alert</div>
+                            <div class="activity-desc">3 students need intervention</div>
+                        </div>
+                        <div class="activity-time">1 hour ago</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="shared-app.js"></script>
+    <script>
+        let charts = {};
+        let analyticsData = {};
+        let currentTimeRange = 30;
+
+        $(document).ready(function() {
+            // Check authentication
+            if (!checkAuth()) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            // Initialize analytics page
+            initializeAnalytics();
+            
+            // Load initial data
+            loadAnalyticsData();
+            
+            // Set up event listeners
+            setupEventListeners();
+        });
+
+        function initializeAnalytics() {
+            // Initialize charts
+            initializeCharts();
+            
+            // Set up time range selectors
+            $('.date-range-btn').click(function() {
+                const range = parseInt($(this).data('range'));
+                selectTimeRange(range);
+            });
+        }
+
+        function setupEventListeners() {
+            // Progress metric selector
+            $('#progressMetric').change(function() {
+                updateProgressChart($(this).val());
+            });
+
+            // Filter change handlers
+            $('#courseFilter, #cohortFilter, #toolFilter').change(function() {
+                // Auto-apply filters on change
+                applyFilters();
+            });
+        }
+
+        function loadAnalyticsData() {
+            $.ajax({
+                url: '/api/analytics/dashboard',
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                data: {
+                    timeRange: currentTimeRange,
+                    course: $('#courseFilter').val(),
+                    cohort: $('#cohortFilter').val(),
+                    tool: $('#toolFilter').val()
+                },
+                success: function(data) {
+                    analyticsData = data;
+                    updateDashboard(data);
+                },
+                error: function() {
+                    // Fallback with dummy data
+                    analyticsData = getDummyAnalyticsData();
+                    updateDashboard(analyticsData);
+                }
+            });
+        }
+
+        function getDummyAnalyticsData() {
+            return {
+                kpis: {
+                    totalLearners: 142,
+                    engagementRate: 87.5,
+                    completionRate: 73.2,
+                    collaborationScore: 8.4
+                },
+                progressData: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    completion: [45, 62, 71, 73],
+                    engagement: [78, 82, 85, 88],
+                    collaboration: [6.2, 7.1, 7.8, 8.4]
+                },
+                collaborationPatterns: {
+                    labels: ['Research Phase', 'Writing Phase', 'Review Phase', 'Revision Phase'],
+                    aiAssistance: [65, 78, 45, 82],
+                    humanInput: [85, 92, 88, 90],
+                    combined: [75, 85, 67, 86]
+                },
+                distributionData: {
+                    labels: ['Excellent', 'Good', 'Satisfactory', 'Needs Improvement'],
+                    values: [28, 45, 52, 17]
+                },
+                performanceTable: [
+                    { id: 'STU001', engagement: 92, collaboration: 8.7, completion: 85, trend: 'up' },
+                    { id: 'STU002', engagement: 78, collaboration: 7.2, completion: 79, trend: 'stable' },
+                    { id: 'STU003', engagement: 65, collaboration: 6.8, completion: 62, trend: 'down' },
+                    { id: 'STU004', engagement: 88, collaboration: 8.9, completion: 91, trend: 'up' },
+                    { id: 'STU005', engagement: 71, collaboration: 7.5, completion: 68, trend: 'stable' }
+                ]
+            };
+        }
+
+        function updateDashboard(data) {
+            // Update KPIs
+            animateCounter('#totalLearners', data.kpis.totalLearners);
+            animateCounter('#engagementRate', data.kpis.engagementRate, '%');
+            animateCounter('#completionRate', data.kpis.completionRate, '%');
+            animateCounter('#collaborationScore', data.kpis.collaborationScore);
+
+            // Update charts
+            updateProgressChart('completion');
+            updateCollaborationChart();
+            updateDistributionChart();
+            
+            // Update performance table
+            updatePerformanceTable(data.performanceTable);
+        }
+
+        function initializeCharts() {
+            // Progress Chart
+            const progressCtx = document.getElementById('progressChart').getContext('2d');
+            charts.progressChart = new Chart(progressCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Progress',
+                        data: [],
+                        borderColor: '#4facfe',
+                        backgroundColor: 'rgba(79, 172, 254, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: getChartOptions('Progress Over Time')
+            });
+
+            // Collaboration Chart
+            const collaborationCtx = document.getElementById('collaborationChart').getContext('2d');
+            charts.collaborationChart = new Chart(collaborationCtx, {
+                type: 'radar',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'AI Assistance',
+                            data: [],
+                            borderColor: '#4facfe',
+                            backgroundColor: 'rgba(79, 172, 254, 0.1)',
+                        },
+                        {
+                            label: 'Human Input',
+                            data: [],
+                            borderColor: '#f093fb',
+                            backgroundColor: 'rgba(240, 147, 251, 0.1)',
+                        }
+                    ]
+                },
+                options: getRadarChartOptions()
+            });
+
+            // Distribution Chart
+            const distributionCtx = document.getElementById('distributionChart').getContext('2d');
+            charts.distributionChart = new Chart(distributionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [
+                            '#22c55e',
+                            '#4facfe',
+                            '#f59e0b',
+                            '#ef4444'
+                        ]
+                    }]
+                },
+                options: getDoughnutChartOptions()
+            });
+        }
+
+        function getChartOptions(title) {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: false
+                    },
+                    legend: {
+                        labels: {
+                            color: '#ffffff'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#ffffff'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: '#ffffff'
+                        }
+                    }
+                }
+            };
+        }
+
+        function getRadarChartOptions() {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#ffffff'
+                        }
+                    }
+                },
+                scales: {
+                    r: {
+                        angleLines: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        pointLabels: {
+                            color: '#ffffff'
+                        },
+                        ticks: {
+                            color: '#ffffff',
+                            backdropColor: 'transparent'
+                        }
+                    }
+                }
+            };
+        }
+
+        function getDoughnutChartOptions() {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#ffffff',
+                            padding: 20
+                        }
+                    }
+                }
+            };
+        }
+
+        function updateProgressChart(metric) {
+            const data = analyticsData.progressData;
+            const chart = charts.progressChart;
+            
+            chart.data.labels = data.labels;
+            chart.data.datasets[0].data = data[metric] || data.completion;
+            chart.data.datasets[0].label = metric.charAt(0).toUpperCase() + metric.slice(1);
+            chart.update();
+        }
+
+        function updateCollaborationChart() {
+            const data = analyticsData.collaborationPatterns;
+            const chart = charts.collaborationChart;
+            
+            chart.data.labels = data.labels;
+            chart.data.datasets[0].data = data.aiAssistance;
+            chart.data.datasets[1].data = data.humanInput;
+            chart.update();
+        }
+
+        function updateDistributionChart() {
+            const data = analyticsData.distributionData;
+            const chart = charts.distributionChart;
+            
+            chart.data.labels = data.labels;
+            chart.data.datasets[0].data = data.values;
+            chart.update();
+        }
+
+        function updatePerformanceTable(data) {
+            const tbody = $('#performanceTable tbody');
+            const html = data.map(student => `
+                <tr>
+                    <td>${student.id}</td>
+                    <td>${student.engagement}%</td>
+                    <td>${student.collaboration}</td>
+                    <td>${student.completion}%</td>
+                    <td><span class="trend-indicator trend-${student.trend}">${getTrendIcon(student.trend)}</span></td>
+                </tr>
+            `).join('');
+            
+            tbody.html(html);
+        }
+
+        function getTrendIcon(trend) {
+            switch(trend) {
+                case 'up': return '↗ Improving';
+                case 'down': return '↘ Declining';
+                case 'stable': return '→ Stable';
+                default: return '- No data';
+            }
+        }
+
+        function selectTimeRange(range) {
+            currentTimeRange = range;
+            $('.date-range-btn').removeClass('active');
+            $(`.date-range-btn[data-range="${range}"]`).addClass('active');
+            loadAnalyticsData();
+        }
+
+        function applyFilters() {
+            showNotification('Applying filters...', 'info');
+            loadAnalyticsData();
+        }
+
+        function exportData(format) {
+            const formData = {
+                format: format,
+                timeRange: currentTimeRange,
+                course: $('#courseFilter').val(),
+                cohort: $('#cohortFilter').val(),
+                tool: $('#toolFilter').val()
+            };
+
+            $.ajax({
+                url: '/api/analytics/export',
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                },
+                data: JSON.stringify(formData),
+                success: function(data) {
+                    if (data.downloadUrl) {
+                        window.open(data.downloadUrl, '_blank');
+                        showNotification(`${format.toUpperCase()} export ready for download`, 'success');
+                    } else {
+                        showNotification('Export completed successfully', 'success');
+                    }
+                },
+                error: function() {
+                    showNotification(`Export to ${format.toUpperCase()} functionality coming soon!`, 'info');
+                }
+            });
+        }
+
+        function refreshData() {
+            showNotification('Refreshing data...', 'info');
+            loadAnalyticsData();
+        }
+
+        function animateCounter(selector, target, suffix = '') {
+            const element = $(selector);
+            const current = parseFloat(element.text()) || 0;
+            const increment = target / 50;
+            let counter = current;
+            
+            const timer = setInterval(() => {
+                counter += increment;
+                if (counter >= target) {
+                    element.text(Math.floor(target) + suffix);
+                    clearInterval(timer);
+                } else {
+                    element.text(Math.floor(counter) + suffix);
+                }
+            }, 30);
+        }
+
+        // Initialize animations
+        initializeAnimations();
+    </script>
+</body>
+</html>

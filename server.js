@@ -61,9 +61,10 @@ app.use(helmet({
         directives: {
             defaultSrc: ["'self'"],
             styleSrc: ["'self'", "'unsafe-inline'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "https://code.jquery.com"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://code.jquery.com", "https://accounts.google.com", "https://cdn.jsdelivr.net"],
             imgSrc: ["'self'", "data:", "https:"],
             connectSrc: ["'self'", "wss:", "https:"],
+            frameSrc: ["'self'", "https://accounts.google.com"],
         },
     },
 }));
@@ -111,9 +112,30 @@ authConfig.initialize(passport);
 // xAPI logging middleware - log all requests
 app.use(xapiLogger);
 
-// Static files
+// Static files with proper MIME types
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/views', express.static(path.join(__dirname, 'views')));
+
+// Serve CSS and JS files from views with correct MIME types
+app.get('/shared-styles.css', (req, res) => {
+    res.setHeader('Content-Type', 'text/css');
+    res.sendFile(path.join(__dirname, 'views', 'shared-styles.css'));
+});
+
+app.get('/shared-app.js', (req, res) => {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.sendFile(path.join(__dirname, 'views', 'shared-app.js'));
+});
+
+// Serve other static files from views
+app.use('/views', express.static(path.join(__dirname, 'views'), {
+    setHeaders: (res, filepath) => {
+        if (filepath.endsWith('.css')) {
+            res.setHeader('Content-Type', 'text/css');
+        } else if (filepath.endsWith('.js')) {
+            res.setHeader('Content-Type', 'application/javascript');
+        }
+    }
+}));
 
 // API Routes
 app.use('/auth', authRoutes);
@@ -127,6 +149,61 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'index.html'));
 });
 
+app.get('/index.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'index.html'));
+});
+
+// Public pages (no authentication required)
+app.get('/about.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'about.html'));
+});
+
+app.get('/projects.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'projects.html'));
+});
+
+app.get('/publications.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'publications.html'));
+});
+
+app.get('/members.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'members.html'));
+});
+
+app.get('/news.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'news.html'));
+});
+
+app.get('/events.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'events.html'));
+});
+
+app.get('/resources.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'resources.html'));
+});
+
+// Protected pages (require authentication)
+app.get('/dashboard.html', authenticate, (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'dashboard.html'));
+});
+
+app.get('/research.html', authenticate, (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'research.html'));
+});
+
+app.get('/analytics.html', authenticate, (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'analytics.html'));
+});
+
+app.get('/collaboration.html', authenticate, (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'collaboration.html'));
+});
+
+app.get('/assessment.html', authenticate, (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'assessment.html'));
+});
+
+// Legacy routes without .html extension
 app.get('/dashboard', authenticate, (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'dashboard.html'));
 });
@@ -145,6 +222,34 @@ app.get('/collaboration', authenticate, (req, res) => {
 
 app.get('/assessment', authenticate, (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'assessment.html'));
+});
+
+app.get('/projects', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'projects.html'));
+});
+
+app.get('/publications', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'publications.html'));
+});
+
+app.get('/members', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'members.html'));
+});
+
+app.get('/news', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'news.html'));
+});
+
+app.get('/events', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'events.html'));
+});
+
+app.get('/resources', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'resources.html'));
+});
+
+app.get('/about', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'about.html'));
 });
 
 // Health check endpoint

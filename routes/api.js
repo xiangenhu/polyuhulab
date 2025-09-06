@@ -50,12 +50,9 @@ const upload = multer({
     }
 });
 
-// Middleware to ensure all API routes require authentication
-router.use(authenticate);
-
 /**
  * GET /api/health
- * Health check endpoint for API services
+ * Health check endpoint for API services (public endpoint)
  */
 router.get('/health', async (req, res) => {
     try {
@@ -92,6 +89,9 @@ router.get('/health', async (req, res) => {
         });
     }
 });
+
+// Middleware to ensure all other API routes require authentication
+router.use(authenticate);
 
 /**
  * GET /api/profile

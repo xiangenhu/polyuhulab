@@ -42,9 +42,9 @@ class XAPIService {
     async initialize() {
         try {
             this.lrs = new TinCan.LRS({
-                endpoint: process.env.XAPI_ENDPOINT,
-                username: process.env.XAPI_USERNAME,
-                password: process.env.XAPI_PASSWORD,
+                endpoint: process.env.LRS_ENDPOINT,
+                username: process.env.LRS_USERNAME,
+                password: process.env.LRS_PASSWORD,
                 allowFail: false
             });
 

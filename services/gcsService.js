@@ -53,7 +53,14 @@ class GCSService {
             // Verify bucket exists and is accessible
             const [exists] = await this.bucket.exists();
             if (!exists) {
-                throw new Error(`Bucket ${this.bucketName} does not exist`);
+                console.log(`Bucket ${this.bucketName} does not exist, attempting to create...`);
+                try {
+                    await this.bucket.create();
+                    console.log(`Successfully created bucket ${this.bucketName}`);
+                } catch (createError) {
+                    console.warn(`Could not create bucket: ${createError.message}`);
+                    console.log('GCS will operate in limited mode - some features may not work');
+                }
             }
 
             this.initialized = true;

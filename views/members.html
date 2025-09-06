@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Members - Hu Lab @ PolyU</title>
+    <link rel="stylesheet" href="shared-styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .members-header {
+            padding: 60px 0 40px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .members-title {
+            font-size: 3rem;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        .members-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 800px;
+            margin: 0 auto 40px;
+            line-height: 1.6;
+        }
+
+        .member-categories {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 60px;
+            flex-wrap: wrap;
+        }
+
+        .category-filter {
+            padding: 12px 24px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .category-filter.active,
+        .category-filter:hover {
+            background: var(--glass-hover);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .members-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+
+        .member-card {
+            position: relative;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid var(--glass-border);
+            overflow: hidden;
+        }
+
+        .member-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(102, 126, 234, 0.3);
+        }
+
+        .member-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(240, 147, 251, 0.05));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .member-card:hover::after {
+            opacity: 1;
+        }
+
+        .member-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            background: var(--primary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .member-card:hover .member-avatar {
+            transform: scale(1.1);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .member-photo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+
+        .member-name {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .member-role {
+            color: var(--text-accent);
+            font-size: 1rem;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+
+        .member-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            margin-bottom: 16px;
+        }
+
+        .status-active {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .status-alumni {
+            background: rgba(156, 163, 175, 0.2);
+            color: #9ca3af;
+            border: 1px solid rgba(156, 163, 175, 0.3);
+        }
+
+        .member-bio {
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .member-research {
+            margin-bottom: 20px;
+        }
+
+        .research-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        .research-tag {
+            padding: 3px 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            font-size: 0.75rem;
+            color: var(--text-accent);
+        }
+
+        .member-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .stat-item {
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        .stat-number {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-accent);
+            margin-top: 2px;
+        }
+
+        .member-links {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .member-link {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-accent);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        .member-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+        }
+
+        .edit-profile-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: var(--text-accent);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+
+        .member-card:hover .edit-profile-btn {
+            opacity: 1;
+        }
+
+        .edit-profile-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+        }
+
+        /* Profile Edit Modal */
+        .profile-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        .profile-modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 40px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .modal-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #4facfe;
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .pi-card {
+            grid-column: 1 / -1;
+            max-width: 800px;
+            margin: 0 auto 40px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(240, 147, 251, 0.1));
+        }
+
+        .pi-card .member-avatar {
+            width: 150px;
+            height: 150px;
+            font-size: 64px;
+        }
+
+        .pi-card .member-name {
+            font-size: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .members-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .members-title {
+                font-size: 2rem;
+            }
+            
+            .modal-content {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-element floating-1"></div>
+    <div class="floating-element floating-2"></div>
+    <div class="floating-element floating-3"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-container">
+                <a href="index.html" class="nav-brand">Hu Lab</a>
+                <div class="nav-links">
+                    <a href="index.html" class="nav-item">Home</a>
+                    <a href="research.html" class="nav-item">Research</a>
+                    <a href="projects.html" class="nav-item">Projects</a>
+                    <a href="members.html" class="nav-item active">Members</a>
+                    <a href="dashboard.html" class="nav-item">Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <section class="members-header">
+        <div class="container">
+            <h1 class="members-title slide-in-down">Lab Members</h1>
+            <p class="members-subtitle slide-in-up">
+                Meet the talented researchers, students, and collaborators who make our groundbreaking work possible. 
+                Our diverse team brings expertise from artificial intelligence, education, cognitive science, 
+                and human-computer interaction to tackle the most challenging problems in educational technology.
+            </p>
+        </div>
+    </section>
+
+    <!-- Category Filters -->
+    <section style="padding: 0 0 40px;">
+        <div class="container">
+            <div class="member-categories">
+                <div class="category-filter active magnetic" data-category="all">All Members</div>
+                <div class="category-filter magnetic" data-category="faculty">Faculty</div>
+                <div class="category-filter magnetic" data-category="postdoc">Postdocs</div>
+                <div class="category-filter magnetic" data-category="phd">PhD Students</div>
+                <div class="category-filter magnetic" data-category="masters">Master's Students</div>
+                <div class="category-filter magnetic" data-category="undergrad">Undergraduates</div>
+                <div class="category-filter magnetic" data-category="alumni">Alumni</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Members Grid -->
+    <section style="padding: 0 0 80px;">
+        <div class="container">
+            <div class="members-grid" id="membersGrid">
+                <!-- Principal Investigator -->
+                <div class="glass-card member-card pi-card magnetic tilt-card slide-in-up" data-category="faculty">
+                    <button class="edit-profile-btn tooltip" data-tooltip="Edit Profile" onclick="openProfileModal('xiangen-hu')">✏️</button>
+                    <div class="member-avatar glow">
+                        👨‍🔬
+                    </div>
+                    <h3 class="member-name">Dr. Xiangen Hu</h3>
+                    <div class="member-role">Principal Investigator & Lab Director</div>
+                    <div class="member-status status-active">Active</div>
+                    <p class="member-bio">
+                        Leading expert in AI-powered educational systems, cognitive science applications, and human-computer 
+                        interaction. Dr. Hu's research focuses on creating intelligent tutoring systems that adapt to 
+                        individual learning needs and cultural contexts.
+                    </p>
+                    <div class="member-research">
+                        <div class="research-tags">
+                            <span class="research-tag">AI in Education</span>
+                            <span class="research-tag">Cognitive Science</span>
+                            <span class="research-tag">HCI</span>
+                            <span class="research-tag">Adaptive Learning</span>
+                            <span class="research-tag">Cultural Computing</span>
+                        </div>
+                    </div>
+                    <div class="member-stats">
+                        <div class="stat-item">
+                            <div class="stat-number">150+</div>
+                            <div class="stat-label">Publications</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">$8.5M</div>
+                            <div class="stat-label">Funding</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">25+</div>
+                            <div class="stat-label">Students</div>
+                        </div>
+                    </div>
+                    <div class="member-links">
+                        <a href="#" class="member-link tooltip" data-tooltip="Google Scholar">📚</a>
+                        <a href="#" class="member-link tooltip" data-tooltip="ResearchGate">🔬</a>
+                        <a href="#" class="member-link tooltip" data-tooltip="LinkedIn">💼</a>
+                        <a href="#" class="member-link tooltip" data-tooltip="Email">✉️</a>
+                    </div>
+                </div>
+
+                <!-- Postdoc Researchers -->
+                <div class="glass-card member-card magnetic tilt-card slide-in-up stagger-1" data-category="postdoc">
+                    <button class="edit-profile-btn tooltip" data-tooltip="Edit Profile" onclick="openProfileModal('sarah-chen')">✏️</button>
+                    <div class="member-avatar">👩‍💻</div>
+                    <h3 class="member-name">Dr. Sarah Chen</h3>
+                    <div class="member-role">Postdoctoral Researcher</div>
+                    <div class="member-status status-active">Active</div>
+                    <p class="member-bio">
+                        Specializes in machine learning applications for educational data mining. Currently developing 
+                        predictive models for student learning outcomes and engagement patterns.
+                    </p>
+                    <div class="member-research">
+                        <div class="research-tags">
+                            <span class="research-tag">Machine Learning</span>
+                            <span class="research-tag">Educational Data Mining</span>
+                            <span class="research-tag">Predictive Analytics</span>
+                        </div>
+                    </div>
+                    <div class="member-stats">
+                        <div class="stat-item">
+                            <div class="stat-number">25</div>
+                            <div class="stat-label">Publications</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">3</div>
+                            <div class="stat-label">Projects</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">2</div>
+                            <div class="stat-label">Years</div>
+                        </div>
+                    </div>
+                    <div class="member-links">
+                        <a href="#" class="member-link tooltip" data-tooltip="Google Scholar">📚</a>
+                        <a href="#" class="member-link tooltip" data-tooltip="GitHub">💻</a>
+                        <a href="#" class="member-link tooltip" data-tooltip="LinkedIn">💼</a>
+                        <a href="#" class="member-link tooltip" data-tooltip="Email">✉️</a>
+                    </div>
+                </div>
+
+                <!-- PhD Students -->
+                <div class="glass-card member-card magnetic tilt-card slide-in-up stagger-2" data-category="phd">
+                    <button class="edit-profile-btn tooltip" data-tooltip="Edit Profile" onclick="openProfileModal('maria-rodriguez')">✏️</button>
+                    <div class="member-avatar">👩‍🔬</div>
+                    <h3 class="member-name">Maria Rodriguez</h3>
+                    <div class="member-role">PhD Student (4th Year)</div>
+                    <div class="member-status status-active">Active</div>
+                    <p class="member-bio">
+                        Researching AI ethics and inclusive learning design. Working on developing frameworks for 
+                        bias detection and mitigation in educational AI systems.
+                    </p>
+                    <div class="member-research">
+                        <div class="research-tags">
+                            <span class="research-tag">AI Ethics</span>
+                            <span class="research-tag">Inclusive Design</span>
+                            <span class="research-tag">Bias Detection</span>
+                        </div>
+                    </div>
+                    <div class="member-stats">
+                        <div class="stat-item">
+                            <div class="stat-number">12</div>
+                            <div class="stat-label">Publications</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">2</div>
+                            <div class="stat-label">Awards</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">4</div>
+                            <div class="stat-label">Years</div>
+                        </div>
+                    </div>
+                    <div class="member-links">
+                        <a href="#" class="member-link tooltip" data-tooltip="Google Scholar">📚</a>
+                        <a href="#" class="member-link tooltip" data-tooltip="Twitter">🐦</a>
+                        <a href="#" class="member-link tooltip" data-tooltip="LinkedIn">💼</a>
+                        <a href="#" class="member-link tooltip" data-tooltip="Email">✉️</a>
+                    </div>
+                </div>
+
+                <div class="glass-card member-card magnetic tilt-card slide-in-up stagger-3" data-category="phd">
+                    <button class="edit-profile-btn tooltip" data-tooltip="Edit Profile" onclick="openProfileModal('james-park')">✏️</button>
+                    <div class="member-avatar">👨‍💻</div>
+                    <h3 class="member-name">James Park</h3>
+                    <div class="member-role">PhD Student (2nd Year)</div>
+                    <div class="member-status status-active">Active</div>
+                    <p class="member-bio">
+                        Developing immersive VR/AR learning environments. Investigating how virtual reality can enhance 
+                        collaborative learning experiences and spatial understanding.
+                    </p>
+                    <div class="member-research">
+                        <div class="research-tags">
+                            <span class="research-tag">VR/AR</span>
+                            <span class="research-tag">Immersive Learning</span>
+                            <span class="research-tag">Spatial Cognition</span>
+                        </div>
+                    </div>
+                    <div class="member-stats">
+                        <div class="stat-item">
+                            <div class="stat-number">8</div>
+                            <div class="stat-label">Publications</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">3</div>
+                            <div class="stat-label">Demos</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">2</div>
+                            <div class="stat-label">Years</div>
+                        </div>
+                    </div>
+                    <div class="member-links">
+                        <a href="#" class="member-link tooltip" data-tooltip="Portfolio">🌐</a>
+                        <a href="#" class="member-link tooltip" data-tooltip="GitHub">💻</a>
+                        <a href="#" class="member-link tooltip" data-tooltip="LinkedIn">💼</a>
+                        <a href="#" class="member-link tooltip" data-tooltip="Email">✉️</a>
+                    </div>
+                </div>
+
+                <!-- Master's Students -->
+                <div class="glass-card member-card magnetic tilt-card slide-in-up stagger-4" data-category="masters">
+                    <button class="edit-profile-btn tooltip" data-tooltip="Edit Profile" onclick="openProfileModal('lisa-wang')">✏️</button>
+                    <div class="member-avatar">👩‍🎓</div>
+                    <h3 class="member-name">Lisa Wang</h3>
+                    <div class="member-role">Master's Student (2nd Year)</div>
+                    <div class="member-status status-active">Active</div>
+                    <p class="member-bio">
+                        Working on natural language processing for educational chatbots. Developing conversational 
+                        AI that can provide personalized tutoring in STEM subjects.
+                    </p>
+                    <div class="member-research">
+                        <div class="research-tags">
+                            <span class="research-tag">NLP</span>
+                            <span class="research-tag">Chatbots</span>
+                            <span class="research-tag">STEM Education</span>
+                        </div>
+                    </div>
+                    <div class="member-stats">
+                        <div class="stat-item">
+                            <div class="stat-number">4</div>
+                            <div class="stat-label">Publications</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">1</div>
+                            <div class="stat-label">Project</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">2</div>
+                            <div class="stat-label">Years</div>
+                        </div>
+                    </div>
+                    <div class="member-links">
+                        <a href="#" class="member-link tooltip" data-tooltip="GitHub">💻</a>
+                        <a href="#" class="member-link tooltip" data-tooltip="LinkedIn">💼</a>
+                        <a href="#" class="member-link tooltip" data-tooltip="Email">✉️</a>
+                    </div>
+                </div>
+
+                <!-- Undergraduate Students -->
+                <div class="glass-card member-card magnetic tilt-card slide-in-up stagger-5" data-category="undergrad">
+                    <button class="edit-profile-btn tooltip" data-tooltip="Edit Profile" onclick="openProfileModal('alex-kim')">✏️</button>
+                    <div class="member-avatar">👨‍🎓</div>
+                    <h3 class="member-name">Alex Kim</h3>
+                    <div class="member-role">Undergraduate Research Assistant</div>
+                    <div class="member-status status-active">Active</div>
+                    <p class="member-bio">
+                        Computer Science major with interest in educational technology. Currently assisting with 
+                        data collection and analysis for adaptive learning systems research.
+                    </p>
+                    <div class="member-research">
+                        <div class="research-tags">
+                            <span class="research-tag">Data Analysis</span>
+                            <span class="research-tag">Web Development</span>
+                            <span class="research-tag">User Research</span>
+                        </div>
+                    </div>
+                    <div class="member-stats">
+                        <div class="stat-item">
+                            <div class="stat-number">2</div>
+                            <div class="stat-label">Projects</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">1</div>
+                            <div class="stat-label">Publication</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">1</div>
+                            <div class="stat-label">Year</div>
+                        </div>
+                    </div>
+                    <div class="member-links">
+                        <a href="#" class="member-link tooltip" data-tooltip="GitHub">💻</a>
+                        <a href="#" class="member-link tooltip" data-tooltip="LinkedIn">💼</a>
+                        <a href="#" class="member-link tooltip" data-tooltip="Email">✉️</a>
+                    </div>
+                </div>
+
+                <!-- Alumni -->
+                <div class="glass-card member-card magnetic tilt-card slide-in-up stagger-6" data-category="alumni">
+                    <button class="edit-profile-btn tooltip" data-tooltip="Edit Profile" onclick="openProfileModal('david-thompson')">✏️</button>
+                    <div class="member-avatar">👨‍💼</div>
+                    <h3 class="member-name">Dr. David Thompson</h3>
+                    <div class="member-role">Alumni - Now at Google Research</div>
+                    <div class="member-status status-alumni">Alumni</div>
+                    <p class="member-bio">
+                        Former PhD student who developed groundbreaking work in cross-cultural learning systems. 
+                        Now leading AI research initiatives at Google focused on educational applications.
+                    </p>
+                    <div class="member-research">
+                        <div class="research-tags">
+                            <span class="research-tag">Cross-Cultural AI</span>
+                            <span class="research-tag">International Education</span>
+                            <span class="research-tag">Industry Research</span>
+                        </div>
+                    </div>
+                    <div class="member-stats">
+                        <div class="stat-item">
+                            <div class="stat-number">35</div>
+                            <div class="stat-label">Publications</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">2018</div>
+                            <div class="stat-label">Graduated</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number">Google</div>
+                            <div class="stat-label">Current Role</div>
+                        </div>
+                    </div>
+                    <div class="member-links">
+                        <a href="#" class="member-link tooltip" data-tooltip="Google Scholar">📚</a>
+                        <a href="#" class="member-link tooltip" data-tooltip="LinkedIn">💼</a>
+                        <a href="#" class="member-link tooltip" data-tooltip="Email">✉️</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Profile Edit Modal -->
+    <div class="profile-modal" id="profileModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Edit Profile</h2>
+            </div>
+            <form id="profileForm">
+                <input type="hidden" id="memberId" name="memberId">
+                
+                <div class="form-group">
+                    <label class="form-label" for="memberName">Name</label>
+                    <input type="text" class="form-input" id="memberName" name="name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="memberRole">Role</label>
+                    <input type="text" class="form-input" id="memberRole" name="role" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="memberBio">Bio</label>
+                    <textarea class="form-textarea" id="memberBio" name="bio" rows="4" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="researchInterests">Research Interests (comma-separated)</label>
+                    <input type="text" class="form-input" id="researchInterests" name="researchInterests" placeholder="AI, Machine Learning, Education">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="googleScholar">Google Scholar URL</label>
+                    <input type="url" class="form-input" id="googleScholar" name="googleScholar">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="linkedin">LinkedIn URL</label>
+                    <input type="url" class="form-input" id="linkedin" name="linkedin">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="github">GitHub URL</label>
+                    <input type="url" class="form-input" id="github" name="github">
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeProfileModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="p-8">
+        <div class="container">
+            <div class="glass text-center p-6">
+                <p class="text-accent">
+                    Hu Lab @ The Hong Kong Polytechnic University<br>
+                    Building the future of AI-powered education through collaborative research
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="shared-app.js"></script>
+    <script>
+        // Member data (in real app, this would come from a database)
+        let memberData = {
+            'xiangen-hu': {
+                name: 'Dr. Xiangen Hu',
+                role: 'Principal Investigator & Lab Director',
+                bio: 'Leading expert in AI-powered educational systems, cognitive science applications, and human-computer interaction. Dr. Hu\'s research focuses on creating intelligent tutoring systems that adapt to individual learning needs and cultural contexts.',
+                researchInterests: 'AI in Education, Cognitive Science, HCI, Adaptive Learning, Cultural Computing',
+                googleScholar: '',
+                linkedin: '',
+                github: ''
+            },
+            'sarah-chen': {
+                name: 'Dr. Sarah Chen',
+                role: 'Postdoctoral Researcher',
+                bio: 'Specializes in machine learning applications for educational data mining. Currently developing predictive models for student learning outcomes and engagement patterns.',
+                researchInterests: 'Machine Learning, Educational Data Mining, Predictive Analytics',
+                googleScholar: '',
+                linkedin: '',
+                github: ''
+            }
+            // Add more members as needed
+        };
+
+        // Category filtering
+        document.querySelectorAll('.category-filter').forEach(filter => {
+            filter.addEventListener('click', function() {
+                // Remove active class from all filters
+                document.querySelectorAll('.category-filter').forEach(f => f.classList.remove('active'));
+                // Add active class to clicked filter
+                this.classList.add('active');
+                
+                const category = this.getAttribute('data-category');
+                const members = document.querySelectorAll('.member-card');
+                
+                members.forEach(member => {
+                    if (category === 'all') {
+                        member.style.display = 'block';
+                    } else {
+                        const memberCategory = member.getAttribute('data-category');
+                        member.style.display = memberCategory === category ? 'block' : 'none';
+                    }
+                });
+            });
+        });
+
+        // Profile modal functions
+        function openProfileModal(memberId) {
+            const modal = document.getElementById('profileModal');
+            const member = memberData[memberId];
+            
+            if (member) {
+                document.getElementById('memberId').value = memberId;
+                document.getElementById('memberName').value = member.name;
+                document.getElementById('memberRole').value = member.role;
+                document.getElementById('memberBio').value = member.bio;
+                document.getElementById('researchInterests').value = member.researchInterests;
+                document.getElementById('googleScholar').value = member.googleScholar || '';
+                document.getElementById('linkedin').value = member.linkedin || '';
+                document.getElementById('github').value = member.github || '';
+            }
+            
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeProfileModal() {
+            const modal = document.getElementById('profileModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Handle form submission
+        document.getElementById('profileForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const memberId = formData.get('memberId');
+            
+            // Update member data
+            memberData[memberId] = {
+                name: formData.get('name'),
+                role: formData.get('role'),
+                bio: formData.get('bio'),
+                researchInterests: formData.get('researchInterests'),
+                googleScholar: formData.get('googleScholar'),
+                linkedin: formData.get('linkedin'),
+                github: formData.get('github')
+            };
+            
+            // In a real app, you would send this data to your server
+            HuLabUtils.showNotification('Profile updated successfully!', 'success');
+            
+            // Update the UI (simplified for demo)
+            updateMemberCard(memberId, memberData[memberId]);
+            
+            closeProfileModal();
+        });
+
+        function updateMemberCard(memberId, data) {
+            // Find and update the member card (simplified implementation)
+            // In a real app, you'd update the DOM elements with the new data
+            console.log('Updated member:', memberId, data);
+        }
+
+        // Close modal on backdrop click
+        document.getElementById('profileModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeProfileModal();
+            }
+        });
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeAnimations();
+            
+            // Add staggered animation to member cards
+            setTimeout(() => {
+                document.querySelectorAll('.member-card').forEach((card, index) => {
+                    setTimeout(() => {
+                        card.classList.add('slide-in-up');
+                    }, index * 100);
+                });
+            }, 300);
+        });
+    </script>
+</body>
+</html>

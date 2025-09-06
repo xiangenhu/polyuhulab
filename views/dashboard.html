@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="shared-styles.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="shared-components.js"></script>
     <style>
         .dashboard-header {
             padding: 40px 0 20px;
@@ -326,26 +327,11 @@
     </style>
 </head>
 <body>
-    <div class="floating-element floating-1"></div>
-    <div class="floating-element floating-2"></div>
-    <div class="floating-element floating-3"></div>
+    <!-- Floating elements container -->
+    <div id="floating-elements-container"></div>
 
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="container">
-            <div class="nav-container">
-                <a href="index.html" class="nav-brand">Hu Lab</a>
-                <div class="nav-links">
-                    <a href="index.html" class="nav-item">Home</a>
-                    <a href="dashboard.html" class="nav-item active">Dashboard</a>
-                    <a href="research.html" class="nav-item">Research</a>
-                    <a href="analytics.html" class="nav-item">Analytics</a>
-                    <a href="collaboration.html" class="nav-item">Collaborate</a>
-                    <a href="assessment.html" class="nav-item">Assessment</a>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <!-- Navigation container -->
+    <div id="navigation-container"></div>
 
     <!-- Dashboard Header -->
     <section class="dashboard-header">
@@ -919,5 +905,8 @@
             }
         }
     </script>
+
+    <!-- Footer container -->
+    <div id="footer-container"></div>
 </body>
 </html>

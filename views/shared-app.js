@@ -603,8 +603,59 @@ function handleApiError(error, context = 'API request') {
     }
 }
 
+// Component loader utility for DRY approach
+async function loadComponent(selector, componentPath) {
+    try {
+        const response = await fetch(componentPath);
+        const html = await response.text();
+        const element = document.querySelector(selector);
+        if (element) {
+            element.innerHTML = html;
+        }
+    } catch (error) {
+        console.error(`Failed to load component: ${componentPath}`, error);
+    }
+}
+
+// Set active navigation state based on current page
+function setActiveNavigation() {
+    const currentPage = window.location.pathname.split('/').pop().replace('.html', '') || 'index';
+    const navItems = document.querySelectorAll('.nav-item');
+    
+    navItems.forEach(item => {
+        item.classList.remove('active');
+        if (item.getAttribute('data-page') === currentPage) {
+            item.classList.add('active');
+        }
+    });
+}
+
+// Initialize common components for DRY approach
+async function initializeSharedComponents() {
+    // Load navigation if container exists
+    const navContainer = document.querySelector('#navigation-container');
+    if (navContainer) {
+        await loadComponent('#navigation-container', 'components/navigation.html');
+        setActiveNavigation();
+    }
+    
+    // Load footer if container exists
+    const footerContainer = document.querySelector('#footer-container');
+    if (footerContainer) {
+        await loadComponent('#footer-container', 'components/footer.html');
+    }
+    
+    // Load floating elements if container exists
+    const floatingContainer = document.querySelector('#floating-elements-container');
+    if (floatingContainer) {
+        await loadComponent('#floating-elements-container', 'components/floating-elements.html');
+    }
+}
+
 // Initialize WebSocket connection when authenticated
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize shared components first
+    initializeSharedComponents();
     if (checkAuth()) {
         wsManager.connect();
         
@@ -689,7 +740,563 @@ window.HuLabUtils = {
     loadFromLocal,
     removeFromLocal,
     handleApiError,
-    AutoSaver
+    AutoSaver,
+    loadComponent,
+    setActiveNavigation,
+    initializeSharedComponents
 };
 
-console.log('Hu Lab shared utilities loaded successfully');
+// ===== AMAZING NEW INTERACTIVE FEATURES =====
+
+// Particle System for Background Animation
+class ParticleSystem {
+    constructor(containerSelector = 'body', particleCount = 50) {
+        this.container = document.querySelector(containerSelector);
+        this.particles = [];
+        this.particleCount = particleCount;
+        this.isRunning = false;
+        this.init();
+    }
+
+    init() {
+        // Create particle container
+        const particleContainer = document.createElement('div');
+        particleContainer.className = 'particle-container';
+        this.container.appendChild(particleContainer);
+        this.particleContainer = particleContainer;
+
+        // Create particles
+        for (let i = 0; i < this.particleCount; i++) {
+            this.createParticle();
+        }
+
+        this.start();
+    }
+
+    createParticle() {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        
+        // Random properties
+        const size = Math.random() * 4 + 2;
+        const x = Math.random() * window.innerWidth;
+        const speed = Math.random() * 2 + 0.5;
+        const delay = Math.random() * 20;
+
+        particle.style.cssText = `
+            left: ${x}px;
+            width: ${size}px;
+            height: ${size}px;
+            animation-duration: ${speed + 15}s;
+            animation-delay: ${delay}s;
+        `;
+
+        this.particleContainer.appendChild(particle);
+        this.particles.push(particle);
+
+        // Remove and recreate when animation ends
+        particle.addEventListener('animationend', () => {
+            if (this.isRunning) {
+                particle.remove();
+                this.createParticle();
+            }
+        });
+    }
+
+    start() {
+        this.isRunning = true;
+    }
+
+    stop() {
+        this.isRunning = false;
+    }
+
+    destroy() {
+        this.stop();
+        if (this.particleContainer) {
+            this.particleContainer.remove();
+        }
+        this.particles = [];
+    }
+}
+
+// Mouse Trail Effect
+class MouseTrail {
+    constructor() {
+        this.trail = [];
+        this.maxTrailLength = 20;
+        this.init();
+    }
+
+    init() {
+        document.addEventListener('mousemove', (e) => {
+            this.addTrailPoint(e.clientX, e.clientY);
+        });
+
+        this.animate();
+    }
+
+    addTrailPoint(x, y) {
+        const point = document.createElement('div');
+        point.className = 'mouse-trail-point';
+        point.style.cssText = `
+            position: fixed;
+            left: ${x}px;
+            top: ${y}px;
+            width: 6px;
+            height: 6px;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.8), transparent);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+        `;
+
+        document.body.appendChild(point);
+        this.trail.push(point);
+
+        // Limit trail length
+        if (this.trail.length > this.maxTrailLength) {
+            const oldPoint = this.trail.shift();
+            oldPoint.remove();
+        }
+    }
+
+    animate() {
+        this.trail.forEach((point, index) => {
+            const age = index / this.trail.length;
+            const opacity = Math.max(0, 1 - age);
+            const scale = Math.max(0.1, 1 - age);
+            
+            point.style.opacity = opacity;
+            point.style.transform = `translate(-50%, -50%) scale(${scale})`;
+        });
+
+        requestAnimationFrame(() => this.animate());
+    }
+}
+
+// Enhanced Glass Card Hover Effects
+function initializeEnhancedGlassEffects() {
+    document.querySelectorAll('.glass-card').forEach(card => {
+        // Add magnetic effect
+        card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width / 2;
+            const y = e.clientY - rect.top - rect.height / 2;
+            
+            const moveX = x * 0.05;
+            const moveY = y * 0.05;
+            
+            card.style.transform = `translate(${moveX}px, ${moveY}px) scale(1.02)`;
+        });
+
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'translate(0px, 0px) scale(1)';
+        });
+
+        // Add ripple effect on click
+        card.addEventListener('click', function(e) {
+            const rect = this.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            const ripple = document.createElement('span');
+            ripple.className = 'ripple';
+            ripple.style.cssText = `
+                position: absolute;
+                left: ${x}px;
+                top: ${y}px;
+                width: 0;
+                height: 0;
+                border-radius: 50%;
+                background: rgba(255, 255, 255, 0.3);
+                transform: translate(-50%, -50%);
+                animation: ripple 0.6s linear;
+                pointer-events: none;
+            `;
+
+            this.style.position = 'relative';
+            this.appendChild(ripple);
+
+            setTimeout(() => ripple.remove(), 600);
+        });
+    });
+
+    // Add ripple animation to CSS
+    if (!document.getElementById('ripple-styles')) {
+        const style = document.createElement('style');
+        style.id = 'ripple-styles';
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    width: 200px;
+                    height: 200px;
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+// Text Animation Effects
+class TextAnimator {
+    static typeWriter(element, text, speed = 50) {
+        element.innerHTML = '';
+        let i = 0;
+        
+        function type() {
+            if (i < text.length) {
+                element.innerHTML += text.charAt(i);
+                i++;
+                setTimeout(type, speed);
+            }
+        }
+        
+        type();
+    }
+
+    static fadeInWords(element, delay = 200) {
+        const text = element.textContent;
+        const words = text.split(' ');
+        element.innerHTML = '';
+
+        words.forEach((word, index) => {
+            const span = document.createElement('span');
+            span.textContent = word + ' ';
+            span.style.opacity = '0';
+            span.style.transform = 'translateY(20px)';
+            span.style.transition = 'all 0.6s ease';
+            element.appendChild(span);
+
+            setTimeout(() => {
+                span.style.opacity = '1';
+                span.style.transform = 'translateY(0)';
+            }, index * delay);
+        });
+    }
+
+    static glitchEffect(element, duration = 2000) {
+        const originalText = element.textContent;
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()';
+        
+        let iterations = 0;
+        const maxIterations = 10;
+        
+        const interval = setInterval(() => {
+            element.textContent = originalText
+                .split('')
+                .map((char, index) => {
+                    if (index < iterations || char === ' ') {
+                        return originalText[index];
+                    }
+                    return chars[Math.floor(Math.random() * chars.length)];
+                })
+                .join('');
+                
+            if (iterations >= originalText.length) {
+                clearInterval(interval);
+                element.textContent = originalText;
+            }
+            
+            iterations += 1/3;
+        }, 30);
+    }
+}
+
+// Enhanced Loading Animations
+class LoadingAnimations {
+    static createPulseLoader(container) {
+        const loader = document.createElement('div');
+        loader.className = 'pulse-loader';
+        loader.innerHTML = `
+            <div class="pulse-dot"></div>
+            <div class="pulse-dot"></div>
+            <div class="pulse-dot"></div>
+        `;
+        
+        if (!document.getElementById('pulse-loader-styles')) {
+            const style = document.createElement('style');
+            style.id = 'pulse-loader-styles';
+            style.textContent = `
+                .pulse-loader {
+                    display: flex;
+                    gap: 8px;
+                    justify-content: center;
+                    align-items: center;
+                }
+                .pulse-dot {
+                    width: 12px;
+                    height: 12px;
+                    border-radius: 50%;
+                    background: var(--accent-gradient);
+                    animation: pulse-wave 1.4s ease-in-out infinite both;
+                }
+                .pulse-dot:nth-child(1) { animation-delay: -0.32s; }
+                .pulse-dot:nth-child(2) { animation-delay: -0.16s; }
+                @keyframes pulse-wave {
+                    0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+                    40% { transform: scale(1.2); opacity: 1; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        container.appendChild(loader);
+        return loader;
+    }
+
+    static createSkeletonLoader(container, lines = 3) {
+        const skeleton = document.createElement('div');
+        skeleton.className = 'skeleton-loader';
+        
+        for (let i = 0; i < lines; i++) {
+            const line = document.createElement('div');
+            line.className = 'skeleton-line';
+            line.style.width = Math.random() * 40 + 60 + '%';
+            skeleton.appendChild(line);
+        }
+        
+        if (!document.getElementById('skeleton-loader-styles')) {
+            const style = document.createElement('style');
+            style.id = 'skeleton-loader-styles';
+            style.textContent = `
+                .skeleton-loader {
+                    padding: 20px;
+                }
+                .skeleton-line {
+                    height: 16px;
+                    background: linear-gradient(90deg, 
+                        rgba(255,255,255,0.1) 25%, 
+                        rgba(255,255,255,0.2) 50%, 
+                        rgba(255,255,255,0.1) 75%);
+                    background-size: 200% 100%;
+                    animation: skeleton-loading 1.5s infinite;
+                    margin-bottom: 12px;
+                    border-radius: 4px;
+                }
+                @keyframes skeleton-loading {
+                    0% { background-position: 200% 0; }
+                    100% { background-position: -200% 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        container.appendChild(skeleton);
+        return skeleton;
+    }
+}
+
+// Interactive Dashboard Components
+class InteractiveDashboard {
+    static createMetricCard(title, value, change, icon) {
+        const card = document.createElement('div');
+        card.className = 'glass-card metric-card tilt-card';
+        
+        const changeColor = change >= 0 ? '#22c55e' : '#ef4444';
+        const changeIcon = change >= 0 ? '↗' : '↘';
+        
+        card.innerHTML = `
+            <div class="metric-header">
+                <span class="metric-icon">${icon}</span>
+                <span class="metric-change" style="color: ${changeColor}">
+                    ${changeIcon} ${Math.abs(change)}%
+                </span>
+            </div>
+            <div class="metric-title">${title}</div>
+            <div class="metric-value pulse">${value}</div>
+            <div class="metric-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${Math.abs(change)}%"></div>
+                </div>
+            </div>
+        `;
+        
+        // Add styles
+        if (!document.getElementById('metric-card-styles')) {
+            const style = document.createElement('style');
+            style.id = 'metric-card-styles';
+            style.textContent = `
+                .metric-card {
+                    padding: 24px;
+                    min-height: 140px;
+                    position: relative;
+                    overflow: hidden;
+                }
+                .metric-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 16px;
+                }
+                .metric-icon {
+                    font-size: 24px;
+                }
+                .metric-change {
+                    font-weight: 600;
+                    font-size: 14px;
+                }
+                .metric-title {
+                    color: var(--text-secondary);
+                    font-size: 14px;
+                    margin-bottom: 8px;
+                }
+                .metric-value {
+                    font-size: 32px;
+                    font-weight: 700;
+                    background: var(--accent-gradient);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    margin-bottom: 16px;
+                }
+                .metric-progress {
+                    position: absolute;
+                    bottom: 0;
+                    left: 0;
+                    right: 0;
+                    height: 3px;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        return card;
+    }
+
+    static createNotificationBell(count = 0) {
+        const bell = document.createElement('div');
+        bell.className = 'notification-bell tooltip magnetic';
+        bell.setAttribute('data-tooltip', `${count} notifications`);
+        
+        bell.innerHTML = `
+            <span class="bell-icon">🔔</span>
+            ${count > 0 ? `<span class="notification-badge pulse">${count}</span>` : ''}
+        `;
+        
+        // Add styles
+        if (!document.getElementById('notification-bell-styles')) {
+            const style = document.createElement('style');
+            style.id = 'notification-bell-styles';
+            style.textContent = `
+                .notification-bell {
+                    position: relative;
+                    cursor: pointer;
+                    padding: 8px;
+                    border-radius: 50%;
+                    transition: all 0.3s ease;
+                }
+                .notification-bell:hover {
+                    background: var(--glass-hover);
+                }
+                .bell-icon {
+                    font-size: 24px;
+                    display: block;
+                }
+                .notification-badge {
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                    background: #ef4444;
+                    color: white;
+                    border-radius: 50%;
+                    width: 20px;
+                    height: 20px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 12px;
+                    font-weight: bold;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        return bell;
+    }
+}
+
+// Initialize all enhanced features
+function initializeAmazingFeatures() {
+    // Initialize particle system
+    if (!window.particleSystem) {
+        window.particleSystem = new ParticleSystem();
+    }
+    
+    // Initialize mouse trail
+    if (!window.mouseTrail) {
+        window.mouseTrail = new MouseTrail();
+    }
+    
+    // Initialize enhanced glass effects
+    initializeEnhancedGlassEffects();
+    
+    // Add text animation to titles
+    document.querySelectorAll('h1, h2, h3').forEach((title, index) => {
+        setTimeout(() => {
+            if (title.classList.contains('typewriter')) {
+                const text = title.textContent;
+                TextAnimator.typeWriter(title, text, 100);
+            } else if (!title.classList.contains('vision-title')) {
+                TextAnimator.fadeInWords(title, 150);
+            }
+            // vision-title will display normally without animation
+        }, index * 300);
+    });
+    
+    // Enhanced navigation hover effects
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-2px)';
+            this.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.3)';
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = 'none';
+        });
+    });
+    
+    // Add glow effect to important buttons
+    document.querySelectorAll('.btn-primary').forEach(btn => {
+        btn.classList.add('glow');
+    });
+    
+    // Initialize intersection observer for staggered animations
+    const staggerObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry, index) => {
+            if (entry.isIntersecting) {
+                setTimeout(() => {
+                    entry.target.classList.add('slide-in-up');
+                }, index * 100);
+                staggerObserver.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+    
+    document.querySelectorAll('.glass-card, .feature-card').forEach(card => {
+        staggerObserver.observe(card);
+    });
+}
+
+// Update the original initialization
+const originalInitialize = initializeAnimations;
+initializeAnimations = function() {
+    originalInitialize();
+    setTimeout(initializeAmazingFeatures, 200);
+};
+
+// Enhanced utility exports
+window.HuLabUtils = {
+    ...window.HuLabUtils,
+    ParticleSystem,
+    MouseTrail,
+    TextAnimator,
+    LoadingAnimations,
+    InteractiveDashboard,
+    initializeAmazingFeatures
+};
+
+console.log('🚀 Hu Lab amazing interactive features loaded successfully!');
+console.log('✨ Features include: Particles, Mouse trails, Enhanced glass effects, Text animations, and more!');

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>{{PAGE_TITLE}} - Hu Lab @ PolyU</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="shared-styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="shared-components.js"></script>
+    {{ADDITIONAL_HEAD}}
+</head>
+<body>
+    <!-- Floating elements container -->
+    <div id="floating-elements-container"></div>
+
+    <!-- Navigation container -->
+    <div id="navigation-container"></div>
+
+    <!-- Page Content -->
+    {{PAGE_CONTENT}}
+
+    <!-- Footer container -->
+    <div id="footer-container"></div>
+
+    <script src="shared-app.js"></script>
+    {{ADDITIONAL_SCRIPTS}}
+</body>
+</html>

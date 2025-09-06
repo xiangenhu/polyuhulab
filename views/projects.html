@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research Projects - Hu Lab @ PolyU</title>
+    <link rel="stylesheet" href="shared-styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .projects-header {
+            padding: 60px 0 40px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .projects-title {
+            font-size: 3rem;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+
+        .projects-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 800px;
+            margin: 0 auto 40px;
+            line-height: 1.6;
+        }
+
+        .filter-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .filter-tab {
+            padding: 12px 24px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .filter-tab.active,
+        .filter-tab:hover {
+            background: var(--glass-hover);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 60px;
+        }
+
+        .project-card {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .project-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 50px rgba(102, 126, 234, 0.3);
+        }
+
+        .project-status {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            z-index: 2;
+        }
+
+        .status-active {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .status-completed {
+            background: rgba(79, 172, 254, 0.2);
+            color: #4facfe;
+            border: 1px solid rgba(79, 172, 254, 0.3);
+        }
+
+        .status-planning {
+            background: rgba(251, 191, 36, 0.2);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        .project-header {
+            padding: 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .project-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .project-subtitle {
+            color: var(--text-accent);
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+        }
+
+        .project-description {
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .project-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .meta-icon {
+            font-size: 16px;
+        }
+
+        .project-progress {
+            margin: 20px 30px 0;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .project-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 20px 30px 30px;
+        }
+
+        .project-tag {
+            padding: 4px 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            font-size: 0.8rem;
+            color: var(--text-accent);
+        }
+
+        .project-footer {
+            padding: 20px 30px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .team-avatars {
+            display: flex;
+            gap: 8px;
+        }
+
+        .team-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--accent-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: white;
+            border: 2px solid var(--glass-border);
+        }
+
+        .project-links {
+            display: flex;
+            gap: 12px;
+        }
+
+        .project-link {
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: var(--text-accent);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .project-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+        }
+
+        .funding-section {
+            background: rgba(255, 255, 255, 0.02);
+            padding: 60px 0;
+        }
+
+        .funding-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+
+        .funding-card {
+            padding: 30px;
+            text-align: center;
+        }
+
+        .funding-amount {
+            font-size: 2.5rem;
+            font-weight: bold;
+            background: var(--secondary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+        }
+
+        .funding-source {
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .funding-projects {
+            color: var(--text-accent);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .project-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .projects-title {
+                font-size: 2rem;
+            }
+            
+            .project-meta {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-tabs {
+                justify-content: flex-start;
+                overflow-x: auto;
+                padding: 0 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-element floating-1"></div>
+    <div class="floating-element floating-2"></div>
+    <div class="floating-element floating-3"></div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-container">
+                <a href="index.html" class="nav-brand">Hu Lab</a>
+                <div class="nav-links">
+                    <a href="index.html" class="nav-item">Home</a>
+                    <a href="research.html" class="nav-item">Research</a>
+                    <a href="projects.html" class="nav-item active">Projects</a>
+                    <a href="members.html" class="nav-item">Members</a>
+                    <a href="dashboard.html" class="nav-item">Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <section class="projects-header">
+        <div class="container">
+            <h1 class="projects-title slide-in-down">Research Projects</h1>
+            <p class="projects-subtitle slide-in-up">
+                Explore our cutting-edge research projects that push the boundaries of AI-powered education, 
+                collaborative learning, and human-computer interaction. From intelligent tutoring systems 
+                to cross-cultural learning platforms, our work shapes the future of education.
+            </p>
+        </div>
+    </section>
+
+    <!-- Filter Tabs -->
+    <section style="padding: 0 0 40px;">
+        <div class="container">
+            <div class="filter-tabs">
+                <div class="filter-tab active magnetic" data-filter="all">All Projects</div>
+                <div class="filter-tab magnetic" data-filter="active">Active</div>
+                <div class="filter-tab magnetic" data-filter="completed">Completed</div>
+                <div class="filter-tab magnetic" data-filter="ai-tutoring">AI Tutoring</div>
+                <div class="filter-tab magnetic" data-filter="learning-analytics">Learning Analytics</div>
+                <div class="filter-tab magnetic" data-filter="collaborative">Collaborative Learning</div>
+                <div class="filter-tab magnetic" data-filter="assessment">Assessment</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Projects Grid -->
+    <section style="padding: 0 0 60px;">
+        <div class="container">
+            <div class="project-grid">
+                <!-- Project 1: AI Tutoring Platform -->
+                <div class="glass-card project-card magnetic tilt-card slide-in-up stagger-1" data-category="active ai-tutoring">
+                    <div class="project-status status-active pulse">Active</div>
+                    <div class="project-header">
+                        <h3 class="project-title">Intelligent Tutoring Platform for STEM Education</h3>
+                        <div class="project-subtitle">NSF Grant #2024-AI-ED-001 • $2.3M • 2022-2026</div>
+                        <p class="project-description">
+                            Developing an AI-powered tutoring system that provides personalized learning experiences 
+                            for K-12 STEM education. The platform uses natural language processing and machine learning 
+                            to adapt to individual learning styles and provide real-time feedback.
+                        </p>
+                        <div class="project-meta">
+                            <div class="meta-item">
+                                <span class="meta-icon">👥</span>
+                                <span>8 Team Members</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-icon">📊</span>
+                                <span>15 Publications</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-icon">🏫</span>
+                                <span>25 Partner Schools</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-icon">👩‍🎓</span>
+                                <span>5,000+ Students</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="project-progress">
+                        <div class="progress-label">
+                            <span>Project Progress</span>
+                            <span>75%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 75%;"></div>
+                        </div>
+                    </div>
+                    <div class="project-tags">
+                        <span class="project-tag">AI Tutoring</span>
+                        <span class="project-tag">Machine Learning</span>
+                        <span class="project-tag">NLP</span>
+                        <span class="project-tag">STEM Education</span>
+                        <span class="project-tag">K-12</span>
+                    </div>
+                    <div class="project-footer">
+                        <div class="team-avatars">
+                            <div class="team-avatar tooltip" data-tooltip="Dr. Xiangen Hu">🧑‍🔬</div>
+                            <div class="team-avatar tooltip" data-tooltip="Dr. Sarah Chen">👩‍💻</div>
+                            <div class="team-avatar tooltip" data-tooltip="Prof. Mike Johnson">👨‍🏫</div>
+                            <div class="team-avatar tooltip" data-tooltip="+5 more">+5</div>
+                        </div>
+                        <div class="project-links">
+                            <a href="#" class="project-link tooltip" data-tooltip="Project Website">🌐</a>
+                            <a href="#" class="project-link tooltip" data-tooltip="GitHub Repository">💻</a>
+                            <a href="#" class="project-link tooltip" data-tooltip="Publications">📚</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project 2: Adaptive Assessment -->
+                <div class="glass-card project-card magnetic tilt-card slide-in-up stagger-2" data-category="active assessment">
+                    <div class="project-status status-active pulse">Active</div>
+                    <div class="project-header">
+                        <h3 class="project-title">Adaptive Assessment Systems with Real-time Analytics</h3>
+                        <div class="project-subtitle">IES Grant #R305A220001 • $1.8M • 2023-2027</div>
+                        <p class="project-description">
+                            Creating innovative assessment methodologies that adapt to student performance in real-time, 
+                            providing immediate feedback and personalized learning pathways. The system integrates 
+                            cognitive science principles with advanced data analytics.
+                        </p>
+                        <div class="project-meta">
+                            <div class="meta-item">
+                                <span class="meta-icon">👥</span>
+                                <span>6 Researchers</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-icon">📈</span>
+                                <span>Real-time Analytics</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-icon">🎯</span>
+                                <span>Adaptive Testing</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-icon">🔬</span>
+                                <span>Cognitive Science</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="project-progress">
+                        <div class="progress-label">
+                            <span>Development Progress</span>
+                            <span>60%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 60%;"></div>
+                        </div>
+                    </div>
+                    <div class="project-tags">
+                        <span class="project-tag">Assessment</span>
+                        <span class="project-tag">Learning Analytics</span>
+                        <span class="project-tag">Adaptive Systems</span>
+                        <span class="project-tag">Data Mining</span>
+                    </div>
+                    <div class="project-footer">
+                        <div class="team-avatars">
+                            <div class="team-avatar tooltip" data-tooltip="Dr. Xiangen Hu">🧑‍🔬</div>
+                            <div class="team-avatar tooltip" data-tooltip="Maria Rodriguez">👩‍🔬</div>
+                            <div class="team-avatar tooltip" data-tooltip="Dr. Alex Kim">🧑‍💼</div>
+                            <div class="team-avatar tooltip" data-tooltip="+3 more">+3</div>
+                        </div>
+                        <div class="project-links">
+                            <a href="#" class="project-link tooltip" data-tooltip="Demo System">🖥️</a>
+                            <a href="#" class="project-link tooltip" data-tooltip="Research Papers">📄</a>
+                            <a href="#" class="project-link tooltip" data-tooltip="Data Visualizations">📊</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project 3: VR Collaborative Learning -->
+                <div class="glass-card project-card magnetic tilt-card slide-in-up stagger-3" data-category="active collaborative">
+                    <div class="project-status status-active pulse">Active</div>
+                    <div class="project-header">
+                        <h3 class="project-title">Virtual Reality Collaborative Learning Environments</h3>
+                        <div class="project-subtitle">Industry Partnership • Meta • $1.2M • 2024-2026</div>
+                        <p class="project-description">
+                            Exploring the potential of virtual and augmented reality for creating immersive collaborative 
+                            learning experiences. Students from different locations can work together in shared virtual 
+                            spaces, enhanced by AI-powered facilitation tools.
+                        </p>
+                        <div class="project-meta">
+                            <div class="meta-item">
+                                <span class="meta-icon">🥽</span>
+                                <span>VR/AR Technology</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-icon">🌍</span>
+                                <span>Global Collaboration</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-icon">🎮</span>
+                                <span>Immersive Learning</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-icon">🤖</span>
+                                <span>AI Facilitation</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="project-progress">
+                        <div class="progress-label">
+                            <span>Prototype Development</span>
+                            <span>45%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 45%;"></div>
+                        </div>
+                    </div>
+                    <div class="project-tags">
+                        <span class="project-tag">VR/AR</span>
+                        <span class="project-tag">Collaborative Learning</span>
+                        <span class="project-tag">Immersive Technology</span>
+                        <span class="project-tag">Social Learning</span>
+                    </div>
+                    <div class="project-footer">
+                        <div class="team-avatars">
+                            <div class="team-avatar tooltip" data-tooltip="Dr. Xiangen Hu">🧑‍🔬</div>
+                            <div class="team-avatar tooltip" data-tooltip="Lisa Wang">👩‍💻</div>
+                            <div class="team-avatar tooltip" data-tooltip="James Park">🧑‍🎨</div>
+                        </div>
+                        <div class="project-links">
+                            <a href="#" class="project-link tooltip" data-tooltip="VR Demo">🥽</a>
+                            <a href="#" class="project-link tooltip" data-tooltip="Technical Specs">⚙️</a>
+                            <a href="#" class="project-link tooltip" data-tooltip="Video Demos">🎥</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project 4: Cross-Cultural AI Learning -->
+                <div class="glass-card project-card magnetic tilt-card slide-in-up stagger-4" data-category="completed ai-tutoring">
+                    <div class="project-status status-completed">Completed</div>
+                    <div class="project-header">
+                        <h3 class="project-title">Cross-Cultural AI Learning Systems</h3>
+                        <div class="project-subtitle">International Collaboration • EU Horizon • €2.1M • 2020-2023</div>
+                        <p class="project-description">
+                            Successfully developed and deployed AI learning systems that adapt to different cultural contexts 
+                            and learning preferences. The project involved partnerships with universities across 15 countries 
+                            and resulted in a culturally-adaptive learning framework.
+                        </p>
+                        <div class="project-meta">
+                            <div class="meta-item">
+                                <span class="meta-icon">🌏</span>
+                                <span>15 Countries</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-icon">🏛️</span>
+                                <span>25 Universities</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-icon">📚</span>
+                                <span>32 Publications</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-icon">🏆</span>
+                                <span>Best Project Award</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="project-progress">
+                        <div class="progress-label">
+                            <span>Project Completed</span>
+                            <span>100%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                    <div class="project-tags">
+                        <span class="project-tag">Cross-Cultural</span>
+                        <span class="project-tag">AI Learning</span>
+                        <span class="project-tag">Cultural Adaptation</span>
+                        <span class="project-tag">International</span>
+                    </div>
+                    <div class="project-footer">
+                        <div class="team-avatars">
+                            <div class="team-avatar tooltip" data-tooltip="Dr. Xiangen Hu">🧑‍🔬</div>
+                            <div class="team-avatar tooltip" data-tooltip="International Team">🌍</div>
+                            <div class="team-avatar tooltip" data-tooltip="+20 more">+20</div>
+                        </div>
+                        <div class="project-links">
+                            <a href="#" class="project-link tooltip" data-tooltip="Final Report">📋</a>
+                            <a href="#" class="project-link tooltip" data-tooltip="Open Source Code">💾</a>
+                            <a href="#" class="project-link tooltip" data-tooltip="Impact Study">📈</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project 5: Learning Analytics Platform -->
+                <div class="glass-card project-card magnetic tilt-card slide-in-up stagger-5" data-category="active learning-analytics">
+                    <div class="project-status status-active pulse">Active</div>
+                    <div class="project-header">
+                        <h3 class="project-title">Next-Gen Learning Analytics Dashboard</h3>
+                        <div class="project-subtitle">Internal Development • University Fund • $800K • 2024-2025</div>
+                        <p class="project-description">
+                            Building an advanced analytics platform that provides real-time insights into student 
+                            learning patterns, engagement metrics, and predictive outcomes. The dashboard serves 
+                            educators, administrators, and researchers with actionable intelligence.
+                        </p>
+                        <div class="project-meta">
+                            <div class="meta-item">
+                                <span class="meta-icon">📊</span>
+                                <span>Real-time Analytics</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-icon">🔮</span>
+                                <span>Predictive Modeling</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-icon">📱</span>
+                                <span>Mobile Dashboard</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-icon">⚡</span>
+                                <span>Live Data Streams</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="project-progress">
+                        <div class="progress-label">
+                            <span>Beta Development</span>
+                            <span>85%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 85%;"></div>
+                        </div>
+                    </div>
+                    <div class="project-tags">
+                        <span class="project-tag">Learning Analytics</span>
+                        <span class="project-tag">Data Visualization</span>
+                        <span class="project-tag">Predictive Analytics</span>
+                        <span class="project-tag">Dashboard</span>
+                    </div>
+                    <div class="project-footer">
+                        <div class="team-avatars">
+                            <div class="team-avatar tooltip" data-tooltip="Dr. Xiangen Hu">🧑‍🔬</div>
+                            <div class="team-avatar tooltip" data-tooltip="Data Science Team">📊</div>
+                            <div class="team-avatar tooltip" data-tooltip="UI/UX Designers">🎨</div>
+                        </div>
+                        <div class="project-links">
+                            <a href="#" class="project-link tooltip" data-tooltip="Live Demo">📱</a>
+                            <a href="#" class="project-link tooltip" data-tooltip="API Documentation">🔧</a>
+                            <a href="#" class="project-link tooltip" data-tooltip="User Guide">📖</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Project 6: AI Ethics Framework -->
+                <div class="glass-card project-card magnetic tilt-card slide-in-up stagger-6" data-category="planning assessment">
+                    <div class="project-status status-planning">Planning</div>
+                    <div class="project-header">
+                        <h3 class="project-title">Ethical AI Framework for Educational Systems</h3>
+                        <div class="project-subtitle">Proposal Submitted • NIH • $3.2M • 2025-2029</div>
+                        <p class="project-description">
+                            Developing comprehensive ethical guidelines and implementation frameworks for AI systems 
+                            in educational contexts. The project will address bias, fairness, transparency, and 
+                            accountability in AI-powered learning environments.
+                        </p>
+                        <div class="project-meta">
+                            <div class="meta-item">
+                                <span class="meta-icon">⚖️</span>
+                                <span>Ethics Framework</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-icon">🔍</span>
+                                <span>Bias Detection</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-icon">📋</span>
+                                <span>Policy Guidelines</span>
+                            </div>
+                            <div class="meta-item">
+                                <span class="meta-icon">🤝</span>
+                                <span>Stakeholder Engagement</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="project-progress">
+                        <div class="progress-label">
+                            <span>Proposal Status</span>
+                            <span>Under Review</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 25%;"></div>
+                        </div>
+                    </div>
+                    <div class="project-tags">
+                        <span class="project-tag">AI Ethics</span>
+                        <span class="project-tag">Fairness</span>
+                        <span class="project-tag">Policy Development</span>
+                        <span class="project-tag">Bias Detection</span>
+                    </div>
+                    <div class="project-footer">
+                        <div class="team-avatars">
+                            <div class="team-avatar tooltip" data-tooltip="Dr. Xiangen Hu">🧑‍🔬</div>
+                            <div class="team-avatar tooltip" data-tooltip="Ethics Researchers">⚖️</div>
+                            <div class="team-avatar tooltip" data-tooltip="Policy Experts">🏛️</div>
+                        </div>
+                        <div class="project-links">
+                            <a href="#" class="project-link tooltip" data-tooltip="Proposal Abstract">📝</a>
+                            <a href="#" class="project-link tooltip" data-tooltip="Research Plan">🗓️</a>
+                            <a href="#" class="project-link tooltip" data-tooltip="Team Bios">👥</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Funding Overview -->
+    <section class="funding-section">
+        <div class="container">
+            <h2 class="text-center text-3xl mb-12" style="background: var(--secondary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Research Funding Overview</h2>
+            
+            <div class="funding-grid">
+                <div class="glass-card funding-card magnetic slide-in-up stagger-1">
+                    <div class="funding-amount glow">$8.5M</div>
+                    <div class="funding-source">Total Active Funding</div>
+                    <div class="funding-projects">Across 5 major projects</div>
+                </div>
+                
+                <div class="glass-card funding-card magnetic slide-in-up stagger-2">
+                    <div class="funding-amount glow">$15.2M</div>
+                    <div class="funding-source">Lifetime Research Funding</div>
+                    <div class="funding-projects">Since lab establishment</div>
+                </div>
+                
+                <div class="glass-card funding-card magnetic slide-in-up stagger-3">
+                    <div class="funding-amount glow">12</div>
+                    <div class="funding-source">Funding Agencies</div>
+                    <div class="funding-projects">NSF, NIH, IES, Industry Partners</div>
+                </div>
+                
+                <div class="glass-card funding-card magnetic slide-in-up stagger-4">
+                    <div class="funding-amount glow">95%</div>
+                    <div class="funding-source">Success Rate</div>
+                    <div class="funding-projects">For major grant applications</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="p-8">
+        <div class="container">
+            <div class="glass text-center p-6">
+                <p class="text-accent">
+                    Hu Lab @ The Hong Kong Polytechnic University<br>
+                    Pushing the boundaries of AI-powered education and human-computer interaction
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="shared-app.js"></script>
+    <script>
+        // Filter functionality
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Remove active class from all tabs
+                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                // Add active class to clicked tab
+                this.classList.add('active');
+                
+                const filter = this.getAttribute('data-filter');
+                const projects = document.querySelectorAll('.project-card');
+                
+                projects.forEach(project => {
+                    if (filter === 'all') {
+                        project.style.display = 'block';
+                        setTimeout(() => {
+                            project.classList.add('slide-in-up');
+                        }, Math.random() * 200);
+                    } else {
+                        const categories = project.getAttribute('data-category').split(' ');
+                        if (categories.includes(filter)) {
+                            project.style.display = 'block';
+                            setTimeout(() => {
+                                project.classList.add('slide-in-up');
+                            }, Math.random() * 200);
+                        } else {
+                            project.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        });
+
+        // Enhanced hover effects for publication items
+        document.querySelectorAll('.publication-item').forEach(item => {
+            item.addEventListener('mouseenter', function() {
+                this.style.background = 'rgba(255, 255, 255, 0.1)';
+                this.style.transform = 'translateX(8px)';
+            });
+            
+            item.addEventListener('mouseleave', function() {
+                this.style.background = 'transparent';
+                this.style.transform = 'translateX(0)';
+            });
+        });
+
+        // Initialize page when loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeAnimations();
+            
+            // Add staggered animation to project cards
+            setTimeout(() => {
+                document.querySelectorAll('.project-card').forEach((card, index) => {
+                    setTimeout(() => {
+                        card.classList.add('slide-in-up');
+                    }, index * 100);
+                });
+            }, 300);
+        });
+    </script>
+</body>
+</html>

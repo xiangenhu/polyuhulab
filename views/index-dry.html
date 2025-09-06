@@ -1,12 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hu Lab @ PolyU - Collaboration with AI in Education</title>
-    <link rel="stylesheet" href="shared-styles.css">
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Shared head elements will be loaded here -->
+    <script src="shared-components.js"></script>
     <style>
         .hero-section {
             padding: 80px 0 60px;
@@ -199,27 +196,18 @@
             }
         }
     </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="shared-styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
-    <div class="floating-element floating-1"></div>
-    <div class="floating-element floating-2"></div>
-    <div class="floating-element floating-3"></div>
+    <!-- Floating elements container -->
+    <div id="floating-elements-container"></div>
 
-    <!-- Navigation -->
-    <nav class="navbar">
-        <div class="container">
-            <div class="nav-container">
-                <a href="index.html" class="nav-brand">Hu Lab</a>
-                <div class="nav-links">
-                    <a href="index.html" class="nav-item active">Home</a>
-                    <a href="research.html" class="nav-item">Research</a>
-                    <a href="projects.html" class="nav-item">Projects</a>
-                    <a href="members.html" class="nav-item">Members</a>
-                    <a href="dashboard.html" class="nav-item">Dashboard</a>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <!-- Navigation container -->
+    <div id="navigation-container"></div>
 
     <!-- Hero Section -->
     <section class="hero-section">
@@ -228,7 +216,6 @@
             <p class="tagline">Humans × AI: co‑creating better learning for all</p>
             <p class="university">The Hong Kong Polytechnic University</p>
             
-
             <div class="glass hero-content tilt-card glow">
                 <h2 class="vision-title">Our Vision</h2>
                 <p class="vision-text slide-in-up stagger-1">
@@ -267,7 +254,6 @@
             </div>
         </div>
     </section>
-
 
     <!-- Research Areas Section -->
     <section class="features-section">
@@ -368,17 +354,8 @@
         </div>
     </section>
 
-    <!-- Footer -->
-    <footer class="p-8">
-        <div class="container">
-            <div class="glass text-center p-6">
-                <p class="text-accent">
-                    Hu Lab @ The Hong Kong Polytechnic University<br>
-                    Building human–AI partnerships for more effective, equitable, and humane learning
-                </p>
-            </div>
-        </div>
-    </footer>
+    <!-- Footer container -->
+    <div id="footer-container"></div>
 
     <script src="shared-app.js"></script>
     <script>

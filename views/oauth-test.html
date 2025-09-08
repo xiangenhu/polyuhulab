@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>OAuth Test - Hu Lab @ PolyU</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="shared-styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="oauth-auth.js"></script>
+    <style>
+        .test-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 40px;
+        }
+        
+        .test-section {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .auth-status {
+            padding: 16px;
+            border-radius: 8px;
+            margin: 16px 0;
+            font-weight: 500;
+        }
+        
+        .auth-status.authenticated {
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #22c55e;
+        }
+        
+        .auth-status.not-authenticated {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+        
+        .user-info {
+            background: var(--glass-hover);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+        
+        .test-button {
+            background: var(--accent-gradient);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 8px;
+            font-size: 14px;
+        }
+        
+        .test-button:hover {
+            opacity: 0.9;
+        }
+        
+        .oauth-login-btn {
+            background: #4285f4 !important;
+            color: white !important;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating elements container -->
+    <div id="floating-elements-container"></div>
+
+    <!-- Navigation container -->
+    <div id="navigation-container"></div>
+
+    <div class="test-container">
+        <div class="test-section">
+            <h1>🔐 OAuth Authentication Test</h1>
+            <p>This page tests the Hu Lab OAuth integration with oauth.skoonline.org</p>
+            
+            <div id="authStatus" class="auth-status not-authenticated">
+                ❌ Not Authenticated
+            </div>
+            
+            <div id="loginSection">
+                <h3>Login Test</h3>
+                <button id="oauthTestLoginBtn" class="oauth-login-btn">
+                    🔑 Login with Google OAuth
+                </button>
+                <p><small>This will redirect to oauth.skoonline.org for authentication</small></p>
+            </div>
+            
+            <div id="userSection" style="display: none;">
+                <h3>User Information</h3>
+                <div id="userInfo" class="user-info">
+                    <!-- User info will be populated here -->
+                </div>
+                <button id="testGoogleApiBtn" class="test-button">Test Google API Access</button>
+                <button id="testLogoutBtn" class="test-button" style="background: #dc3545;">Logout</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🧪 Test Functions</h3>
+            <button id="checkAuthBtn" class="test-button">Check Auth Status</button>
+            <button id="testTokenRefreshBtn" class="test-button">Test Token Refresh</button>
+            <button id="clearStorageBtn" class="test-button" style="background: #f59e0b;">Clear Storage</button>
+            
+            <div id="testResults" style="margin-top: 20px;">
+                <h4>Test Results:</h4>
+                <div id="testOutput" style="background: #1a1a1a; color: #00ff00; padding: 16px; border-radius: 6px; font-family: monospace; max-height: 300px; overflow-y: auto;">
+                    Waiting for tests...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer container -->
+    <div id="footer-container"></div>
+
+    <script>
+        let testOutput = [];
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            testOutput.push(`[${timestamp}] ${message}`);
+            document.getElementById('testOutput').innerHTML = testOutput.slice(-20).join('\n');
+            console.log(message);
+        }
+        
+        // OAuth event handlers
+        window.addEventListener('hulab:userLogin', function(event) {
+            const user = event.detail;
+            log(`✅ User logged in: ${user.name} (${user.email})`);
+            updateUI();
+        });
+        
+        window.addEventListener('hulab:userLogout', function() {
+            log('📤 User logged out');
+            updateUI();
+        });
+        
+        function updateUI() {
+            const isAuth = huLabAuth.isAuthenticated();
+            const user = huLabAuth.getUser();
+            
+            const authStatus = document.getElementById('authStatus');
+            const loginSection = document.getElementById('loginSection');
+            const userSection = document.getElementById('userSection');
+            const userInfo = document.getElementById('userInfo');
+            
+            if (isAuth && user) {
+                authStatus.className = 'auth-status authenticated';
+                authStatus.innerHTML = `✅ Authenticated as ${user.name}`;
+                loginSection.style.display = 'none';
+                userSection.style.display = 'block';
+                
+                userInfo.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px;">
+                        ${user.picture ? `<img src="${user.picture}" alt="${user.name}" style="width: 64px; height: 64px; border-radius: 50%;">` : ''}
+                        <div>
+                            <h4 style="margin: 0 0 8px 0;">${user.name}</h4>
+                            <p style="margin: 0; color: var(--text-secondary);">📧 ${user.email}</p>
+                            ${user.locale ? `<p style="margin: 4px 0 0 0; color: var(--text-accent); font-size: 14px;">🌍 ${user.locale}</p>` : ''}
+                        </div>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-secondary);">
+                        <strong>Token:</strong> ${huLabAuth.getToken() ? '✅ Present' : '❌ Missing'}<br>
+                        <strong>User ID:</strong> ${user.sub || user.id || 'N/A'}
+                    </div>
+                `;
+            } else {
+                authStatus.className = 'auth-status not-authenticated';
+                authStatus.innerHTML = '❌ Not Authenticated';
+                loginSection.style.display = 'block';
+                userSection.style.display = 'none';
+            }
+        }
+        
+        function checkAuthStatus() {
+            const isAuth = huLabAuth.isAuthenticated();
+            const token = huLabAuth.getToken();
+            const user = huLabAuth.getUser();
+            
+            log(`🔍 Auth Status Check:`);
+            log(`  - Authenticated: ${isAuth}`);
+            log(`  - Token Present: ${!!token}`);
+            log(`  - User Data: ${user ? user.name : 'None'}`);
+        }
+        
+        async function testTokenRefresh() {
+            log('🔄 Testing token refresh...');
+            try {
+                const result = await huLabAuth.loadUserProfile();
+                log(`Token refresh result: ${result ? 'Success' : 'Failed'}`);
+            } catch (error) {
+                log(`❌ Token refresh error: ${error.message}`);
+            }
+        }
+        
+        async function testGoogleAPI() {
+            log('🔍 Testing Google API access...');
+            try {
+                const accessToken = await huLabAuth.getGoogleAccessToken([
+                    'https://www.googleapis.com/auth/userinfo.profile'
+                ]);
+                
+                if (accessToken) {
+                    log(`✅ Got Google access token: ${accessToken.substring(0, 20)}...`);
+                    
+                    // Test API call
+                    const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+                        headers: { 'Authorization': `Bearer ${accessToken}` }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        log(`✅ Google API call successful: ${data.name}`);
+                    } else {
+                        log(`❌ Google API call failed: ${response.status}`);
+                    }
+                } else {
+                    log('❌ Failed to get Google access token');
+                }
+            } catch (error) {
+                log(`❌ Google API test error: ${error.message}`);
+            }
+        }
+        
+        function clearStorage() {
+            localStorage.clear();
+            log('🧹 Local storage cleared');
+            updateUI();
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🚀 OAuth Test Page Initialized');
+            
+            // Bind all test buttons
+            const bindButton = (id, handler) => {
+                const btn = document.getElementById(id);
+                if (btn) btn.addEventListener('click', handler);
+            };
+            
+            bindButton('oauthTestLoginBtn', () => huLabAuth.loginWithGoogle());
+            bindButton('testGoogleApiBtn', testGoogleAPI);
+            bindButton('testLogoutBtn', () => huLabAuth.logout());
+            bindButton('checkAuthBtn', checkAuthStatus);
+            bindButton('testTokenRefreshBtn', testTokenRefresh);
+            bindButton('clearStorageBtn', clearStorage);
+            
+            updateUI();
+        });
+    </script>
+</body>
+</html>

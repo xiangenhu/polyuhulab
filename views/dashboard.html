@@ -8,6 +8,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="shared-components.js"></script>
+    <script src="oauth-auth.js"></script>
     <style>
         .dashboard-header {
             padding: 40px 0 20px;
@@ -315,6 +316,201 @@
             }
         }
 
+        .content-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 12px 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background: var(--glass-hover);
+        }
+        
+        .tab-btn.active {
+            color: var(--text-primary);
+            border-bottom-color: var(--accent-color);
+        }
+        
+        .tab-content {
+            min-height: 200px;
+        }
+        
+        .tab-pane {
+            display: none;
+        }
+        
+        .tab-pane.active {
+            display: block;
+        }
+        
+        .content-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .content-item {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .content-item:hover {
+            background: var(--glass-hover);
+            transform: translateY(-2px);
+        }
+        
+        .content-item-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+        
+        .content-item-meta {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .content-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .content-action {
+            background: none;
+            border: none;
+            color: var(--accent-color);
+            cursor: pointer;
+            padding: 4px;
+            transition: color 0.3s ease;
+        }
+        
+        .content-action:hover {
+            color: var(--text-primary);
+        }
+        
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: none;
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .modal-header {
+            padding: 24px 24px 0;
+            border-bottom: 1px solid var(--glass-border);
+            margin-bottom: 24px;
+        }
+        
+        .modal-title {
+            margin: 0 0 16px 0;
+            color: var(--text-primary);
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-close:hover {
+            background: var(--glass-hover);
+            color: var(--text-primary);
+        }
+        
+        .modal-body {
+            padding: 0 24px 24px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .form-input, .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-input:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+        
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+        
         @media (max-width: 480px) {
             .stats-grid {
                 grid-template-columns: 1fr;
@@ -322,6 +518,15 @@
             
             .quick-actions {
                 grid-template-columns: 1fr;
+            }
+            
+            .content-tabs {
+                flex-wrap: wrap;
+            }
+            
+            .tab-btn {
+                flex: 1;
+                min-width: 80px;
             }
         }
     </style>
@@ -337,14 +542,14 @@
     <section class="dashboard-header">
         <div class="container">
             <div class="glass user-welcome">
-                <img src="https://via.placeholder.com/60x60/4facfe/ffffff?text=U" alt="User Avatar" class="user-avatar" id="userAvatar">
+                <div class="user-avatar" id="userAvatar" style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(45deg, #4facfe, #667eea); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 20px;">U</div>
                 <div class="welcome-text">
                     <h1 class="welcome-title" id="welcomeTitle">Welcome back!</h1>
                     <p class="welcome-subtitle" id="welcomeSubtitle">Ready to continue your learning journey?</p>
                 </div>
                 <div class="user-actions">
-                    <button class="btn btn-primary" onclick="openProfileModal()">Profile</button>
-                    <button class="btn btn-secondary" onclick="logout()">Logout</button>
+                    <button class="btn btn-primary" id="profileBtn">Profile</button>
+                    <button class="btn btn-secondary" id="logoutBtn">Logout</button>
                 </div>
             </div>
 
@@ -399,26 +604,61 @@
         </div>
 
         <div class="sidebar">
-            <!-- Quick Actions -->
+            <!-- Content Management -->
             <div class="glass-card">
-                <h2 class="section-title">Quick Actions</h2>
+                <h2 class="section-title">Content Management</h2>
                 <div class="quick-actions">
+                    <button class="quick-action" id="editProfileBtn">
+                        <span class="quick-action-icon">👤</span>
+                        <span class="quick-action-text">Edit Profile</span>
+                    </button>
+                    <button class="quick-action" id="addProjectBtn">
+                        <span class="quick-action-icon">💼</span>
+                        <span class="quick-action-text">Add Project</span>
+                    </button>
+                    <button class="quick-action" id="addNewsBtn">
+                        <span class="quick-action-icon">📰</span>
+                        <span class="quick-action-text">Add News</span>
+                    </button>
+                    <button class="quick-action" id="addPublicationBtn">
+                        <span class="quick-action-icon">📚</span>
+                        <span class="quick-action-text">Add Publication</span>
+                    </button>
                     <a href="research.html" class="quick-action">
                         <span class="quick-action-icon">🔬</span>
-                        <span class="quick-action-text">New Research</span>
-                    </a>
-                    <a href="collaboration.html" class="quick-action">
-                        <span class="quick-action-icon">👥</span>
-                        <span class="quick-action-text">Collaborate</span>
-                    </a>
-                    <a href="assessment.html" class="quick-action">
-                        <span class="quick-action-icon">📝</span>
-                        <span class="quick-action-text">Assessment</span>
+                        <span class="quick-action-text">Research Tools</span>
                     </a>
                     <a href="analytics.html" class="quick-action">
                         <span class="quick-action-icon">📊</span>
-                        <span class="quick-action-text">Analytics</span>
+                        <span class="quick-action-text">View Analytics</span>
                     </a>
+                </div>
+            </div>
+            
+            <!-- My Content -->
+            <div class="glass-card">
+                <h2 class="section-title">My Content</h2>
+                <div class="content-tabs">
+                    <button class="tab-btn active" data-tab="projects">Projects</button>
+                    <button class="tab-btn" data-tab="news">News</button>
+                    <button class="tab-btn" data-tab="publications">Publications</button>
+                </div>
+                <div class="tab-content">
+                    <div class="tab-pane active" id="projects-tab">
+                        <div id="myProjectsList" class="content-list">
+                            <!-- User's projects will load here -->
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="news-tab">
+                        <div id="myNewsList" class="content-list">
+                            <!-- User's news will load here -->
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="publications-tab">
+                        <div id="myPublicationsList" class="content-list">
+                            <!-- User's publications will load here -->
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -443,7 +683,7 @@
     <!-- Profile Modal -->
     <div class="modal-overlay" id="profileModal">
         <div class="modal">
-            <button class="modal-close" onclick="closeProfileModal()">&times;</button>
+            <button class="modal-close" id="profileModalClose">&times;</button>
             <div class="modal-header">
                 <h2 class="modal-title">User Profile</h2>
             </div>
@@ -472,12 +712,149 @@
                         </select>
                     </div>
                     <div class="form-group">
+                        <label class="form-label">Google Scholar Profile</label>
+                        <input type="url" class="form-input" id="profileScholarUrl" placeholder="https://scholar.google.com/citations?user=YOUR_ID">
+                        <small style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 6px; display: block;">
+                            📚 Paste your Google Scholar profile URL to enable automatic publication import
+                        </small>
+                    </div>
+                    <div class="form-group">
                         <label class="form-label">Research Interests</label>
                         <textarea class="form-textarea" id="profileInterests" placeholder="Describe your research interests and areas of focus..."></textarea>
                     </div>
+                    <div class="form-group" id="scholarActions" style="display: none;">
+                        <div style="background: var(--glass-hover); padding: 16px; border-radius: 8px; border: 1px solid var(--glass-border);">
+                            <h4 style="margin: 0 0 12px 0; color: var(--text-primary);">📚 Google Scholar Integration</h4>
+                            <p style="margin: 0 0 16px 0; color: var(--text-secondary); font-size: 0.9rem;">
+                                Import publications directly from your Google Scholar profile
+                            </p>
+                            <button type="button" id="importScholarBtn" class="btn btn-secondary" style="background: var(--accent-gradient);">
+                                📥 Import Publications from Scholar
+                            </button>
+                            <div id="importProgress" style="display: none; margin-top: 12px; color: var(--text-accent);">
+                                <div class="loading" style="display: inline-block; width: 16px; height: 16px; margin-right: 8px;"></div>
+                                Importing publications...
+                            </div>
+                        </div>
+                    </div>
                     <div class="flex gap-4">
                         <button type="submit" class="btn btn-primary">Save Changes</button>
-                        <button type="button" class="btn btn-secondary" onclick="closeProfileModal()">Cancel</button>
+                        <button type="button" class="btn btn-secondary" id="profileCancelBtn">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Project Modal -->
+    <div class="modal-overlay" id="projectModal">
+        <div class="modal">
+            <button class="modal-close" id="projectModalClose">&times;</button>
+            <div class="modal-header">
+                <h2 class="modal-title">Add New Project</h2>
+            </div>
+            <div class="modal-body">
+                <form id="projectForm">
+                    <div class="form-group">
+                        <label class="form-label">Project Title</label>
+                        <input type="text" class="form-input" id="projectTitle" placeholder="Enter project title" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-textarea" id="projectDescription" placeholder="Describe your project..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Status</label>
+                        <select class="form-input" id="projectStatus">
+                            <option value="planning">Planning</option>
+                            <option value="active">Active</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tags</label>
+                        <input type="text" class="form-input" id="projectTags" placeholder="AI, Education, Research (comma-separated)">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Create Project</button>
+                        <button type="button" class="btn btn-secondary" id="projectCancelBtn">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add News Modal -->
+    <div class="modal-overlay" id="newsModal">
+        <div class="modal">
+            <button class="modal-close" id="newsModalClose">&times;</button>
+            <div class="modal-header">
+                <h2 class="modal-title">Add News Article</h2>
+            </div>
+            <div class="modal-body">
+                <form id="newsForm">
+                    <div class="form-group">
+                        <label class="form-label">News Title</label>
+                        <input type="text" class="form-input" id="newsTitle" placeholder="Enter news title" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Content</label>
+                        <textarea class="form-textarea" id="newsContent" placeholder="Write your news content..." required style="min-height: 150px;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Category</label>
+                        <select class="form-input" id="newsCategory">
+                            <option value="research">Research Update</option>
+                            <option value="announcement">Announcement</option>
+                            <option value="achievement">Achievement</option>
+                            <option value="event">Event</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Publish News</button>
+                        <button type="button" class="btn btn-secondary" id="newsCancelBtn">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Publication Modal -->
+    <div class="modal-overlay" id="publicationModal">
+        <div class="modal">
+            <button class="modal-close" id="publicationModalClose">&times;</button>
+            <div class="modal-header">
+                <h2 class="modal-title">Add Publication</h2>
+            </div>
+            <div class="modal-body">
+                <form id="publicationForm">
+                    <div class="form-group">
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-input" id="publicationTitle" placeholder="Publication title" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Authors</label>
+                        <input type="text" class="form-input" id="publicationAuthors" placeholder="Author names (comma-separated)" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Journal/Conference</label>
+                        <input type="text" class="form-input" id="publicationVenue" placeholder="Journal or conference name">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Year</label>
+                        <input type="number" class="form-input" id="publicationYear" placeholder="2025" min="1900" max="2030">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">DOI/URL</label>
+                        <input type="text" class="form-input" id="publicationDoi" placeholder="DOI or URL">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Abstract</label>
+                        <textarea class="form-textarea" id="publicationAbstract" placeholder="Publication abstract..." style="min-height: 120px;"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Add Publication</button>
+                        <button type="button" class="btn btn-secondary" id="publicationCancelBtn">Cancel</button>
                     </div>
                 </form>
             </div>
@@ -488,25 +865,21 @@
     <script>
         let progressChart;
         
-        $(document).ready(function() {
-            // Check authentication
-            if (!checkAuth()) {
-                window.location.href = 'index.html';
-                return;
-            }
+        // Removed jQuery ready - using single DOMContentLoaded event below
+        
+        function initializeDashboardUI() {
+            // Initialize tabs
+            initializeTabs();
             
-            // Initialize dashboard
-            initializeDashboard();
-            
-            // Load dashboard data
-            loadDashboardData();
+            // Bind modal buttons
+            bindModalHandlers();
             
             // Initialize chart
             initializeProgressChart();
             
             // Set up periodic updates
-            setInterval(loadNotifications, 30000); // Update every 30 seconds
-        });
+            setInterval(loadNotifications, 30000);
+        }
         
         function initializeDashboard() {
             const user = JSON.parse(localStorage.getItem('user'));
@@ -897,12 +1270,618 @@
             });
         });
         
-        function logout() {
-            if (confirm('Are you sure you want to logout?')) {
-                localStorage.removeItem('user');
-                localStorage.removeItem('token');
-                window.location.href = 'index.html';
+        // Removed duplicate OAuth event handler - now handled in main DOMContentLoaded
+        
+        // Simplified dashboard initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Dashboard page loading...');
+            
+            // Initialize dashboard UI first
+            initializeDashboardUI();
+            
+            // Bind logout button
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', function() {
+                    if (confirm('Are you sure you want to logout?')) {
+                        // Simple logout - clear storage and redirect
+                        localStorage.clear();
+                        window.location.href = '/views/index.html';
+                    }
+                });
             }
+            
+            // Simple authentication check - just look for OAuth token
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const success = urlParams.get('success');
+            
+            if (success && token) {
+                // OAuth callback - store token and proceed
+                console.log('OAuth callback received, storing token');
+                localStorage.setItem('hulab_oauth_token', token);
+                
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+                
+                // Load user profile and initialize dashboard
+                loadUserFromOAuth(token);
+            } else {
+                // Check for existing token
+                const existingToken = localStorage.getItem('hulab_oauth_token');
+                if (existingToken) {
+                    console.log('Found existing token, loading user profile');
+                    loadUserFromOAuth(existingToken);
+                } else {
+                    console.log('No authentication found - DISABLED REDIRECT FOR TESTING');
+                    // window.location.href = '/views/index.html'; // COMMENTED OUT FOR TESTING
+                }
+            }
+        });
+        
+        // Simplified user loading
+        async function loadUserFromOAuth(token) {
+            try {
+                console.log('Loading user profile from OAuth...');
+                const response = await fetch('/auth/oauth/userinfo', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const userInfo = await response.json();
+                    const user = userInfo.user;
+                    
+                    console.log('User profile loaded:', user);
+                    
+                    // Store user data
+                    localStorage.setItem('hulab_user_data', JSON.stringify(user));
+                    
+                    // Update dashboard UI
+                    const displayName = user.givenName || user.given_name || user.name?.givenName || user.name;
+                    const userEmail = user.email || user.emailAddress;
+                    
+                    if (displayName) {
+                        $('#welcomeTitle').text(`Welcome back, ${displayName}!`);
+                    }
+                    $('#welcomeSubtitle').text(`${userEmail || 'Dashboard'}`);
+                    
+                    // Update avatar
+                    const avatarEl = document.getElementById('userAvatar');
+                    if (user.picture && avatarEl) {
+                        avatarEl.innerHTML = `<img src="${user.picture}" alt="${displayName}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+                    } else if (avatarEl && displayName) {
+                        avatarEl.textContent = displayName.charAt(0).toUpperCase();
+                    }
+                    
+                    // Initialize dashboard - pass user info to avoid undefined email
+                    const userWithEmail = {
+                        ...user,
+                        email: user.email || user.emailAddress || `${user.givenName?.toLowerCase() || 'user'}@hulab.polyu.edu.hk`
+                    };
+                    localStorage.setItem('hulab_user_data', JSON.stringify(userWithEmail));
+                    
+                    // Set up jQuery AJAX defaults for OAuth
+                    const oauthToken = localStorage.getItem('hulab_oauth_token');
+                    if (oauthToken) {
+                        $.ajaxSetup({
+                            beforeSend: function(xhr) {
+                                xhr.setRequestHeader('Authorization', `Bearer ${oauthToken}`);
+                            }
+                        });
+                    }
+                    
+                    loadDashboardData();
+                    loadTabContent('projects');
+                    
+                    console.log('Dashboard initialized successfully');
+                } else {
+                    console.log('Failed to load user profile - DISABLED REDIRECT FOR TESTING');
+                    // window.location.href = '/views/index.html'; // COMMENTED OUT FOR TESTING
+                }
+            } catch (error) {
+                console.error('Error loading user profile:', error);
+                // window.location.href = '/views/index.html'; // COMMENTED OUT FOR TESTING
+            }
+        }
+        
+        // ===== NEW COMPREHENSIVE DASHBOARD FUNCTIONALITY =====
+        
+        // Initialize dashboard for authenticated users
+        window.addEventListener('hulab:userLogin', function(event) {
+            const user = event.detail;
+            initializeDashboard();
+            loadDashboardData();
+            loadTabContent('projects'); // Load default tab
+        });
+        
+        // Tab functionality
+        function initializeTabs() {
+            $('.tab-btn').off('click').on('click', function() {
+                const tab = $(this).data('tab');
+                
+                // Update tab buttons
+                $('.tab-btn').removeClass('active');
+                $(this).addClass('active');
+                
+                // Show corresponding tab content
+                $('.tab-pane').removeClass('active');
+                $(`#${tab}-tab`).addClass('active');
+                
+                // Load content for the active tab
+                loadTabContent(tab);
+            });
+        }
+        
+        function loadTabContent(tab) {
+            const user = huLabAuth ? huLabAuth.getUser() : null;
+            if (!user) return;
+            
+            switch(tab) {
+                case 'projects':
+                    loadUserProjects(user.email);
+                    break;
+                case 'news':
+                    loadUserNews(user.email);
+                    break;
+                case 'publications':
+                    loadUserPublications(user.email);
+                    break;
+            }
+        }
+        
+        // Enhanced modal management
+        function bindModalHandlers() {
+            // Profile management
+            $('#profileBtn, #editProfileBtn').off('click').on('click', () => {
+                loadProfileData();
+                openModal('profileModal');
+            });
+            
+            // Content creation
+            $('#addProjectBtn').off('click').on('click', () => openModal('projectModal'));
+            $('#addNewsBtn').off('click').on('click', () => openModal('newsModal'));
+            $('#addPublicationBtn').off('click').on('click', () => openModal('publicationModal'));
+            
+            // Modal close handlers
+            $('#profileModalClose, #profileCancelBtn').off('click').on('click', () => closeModal('profileModal'));
+            $('#projectModalClose, #projectCancelBtn').off('click').on('click', () => closeModal('projectModal'));
+            $('#newsModalClose, #newsCancelBtn').off('click').on('click', () => closeModal('newsModal'));
+            $('#publicationModalClose, #publicationCancelBtn').off('click').on('click', () => closeModal('publicationModal'));
+            
+            // Form submissions
+            $('#profileForm').off('submit').on('submit', handleProfileUpdate);
+            $('#projectForm').off('submit').on('submit', handleProjectSubmission);
+            $('#newsForm').off('submit').on('submit', handleNewsSubmission);
+            $('#publicationForm').off('submit').on('submit', handlePublicationSubmission);
+        }
+        
+        function openModal(modalId) {
+            $(`#${modalId}`).addClass('active');
+            $('body').css('overflow', 'hidden');
+        }
+        
+        function closeModal(modalId) {
+            $(`#${modalId}`).removeClass('active');
+            $('body').css('overflow', '');
+            // Clear form data
+            $(`#${modalId} form`)[0]?.reset();
+        }
+        
+        // Load profile data into form
+        function loadProfileData() {
+            const user = huLabAuth ? huLabAuth.getUser() : null;
+            if (user) {
+                $('#profileName').val(user.name || '');
+                $('#profileEmail').val(user.email || '');
+                $('#profileInstitution').val(user.institution || '');
+                $('#profileRole').val(user.role || '');
+                $('#profileInterests').val(user.interests || '');
+                $('#profileScholarUrl').val(user.scholarUrl || '');
+                
+                // Show Scholar actions if URL exists
+                if (user.scholarUrl) {
+                    $('#scholarActions').show();
+                }
+            }
+            
+            // Monitor Google Scholar URL input
+            $('#profileScholarUrl').on('input', function() {
+                const url = $(this).val().trim();
+                if (url && isValidScholarUrl(url)) {
+                    $('#scholarActions').fadeIn();
+                } else {
+                    $('#scholarActions').fadeOut();
+                }
+            });
+            
+            // Bind Scholar import button
+            $('#importScholarBtn').off('click').on('click', importFromGoogleScholar);
+        }
+        
+        function isValidScholarUrl(url) {
+            return url.includes('scholar.google.com/citations?user=') || 
+                   url.includes('scholar.google.com/citations?hl=') ||
+                   url.match(/scholar\.google\.[a-z]+\/citations/);
+        }
+        
+        // Content loading functions
+        async function loadUserProjects(userEmail) {
+            try {
+                const token = localStorage.getItem('hulab_oauth_token');
+                const response = await fetch(`/api/user/projects?email=${userEmail}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                
+                const container = $('#myProjectsList');
+                if (data.projects && data.projects.length > 0) {
+                    container.html(data.projects.map(project => `
+                        <div class="content-item">
+                            <div class="content-item-title">${project.title}</div>
+                            <p style="color: var(--text-secondary); margin: 8px 0;">${project.description}</p>
+                            <div class="content-item-meta">
+                                <span>Status: ${project.status}</span>
+                                <div class="content-actions">
+                                    <button class="content-action" onclick="editProject('${project.id}')">✏️</button>
+                                    <button class="content-action" onclick="deleteProject('${project.id}')">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join(''));
+                } else {
+                    container.html('<p style="text-align: center; color: var(--text-secondary);">No projects yet. Click "Add Project" to get started!</p>');
+                }
+            } catch (error) {
+                console.error('Error loading projects:', error);
+                $('#myProjectsList').html('<p style="color: #ef4444;">Error loading projects</p>');
+            }
+        }
+        
+        async function loadUserNews(userEmail) {
+            try {
+                const response = await fetch(`/api/user/news?email=${userEmail}`);
+                const data = await response.json();
+                
+                const container = $('#myNewsList');
+                if (data.news && data.news.length > 0) {
+                    container.html(data.news.map(news => `
+                        <div class="content-item">
+                            <div class="content-item-title">${news.title}</div>
+                            <p style="color: var(--text-secondary); margin: 8px 0;">${news.content.substring(0, 100)}...</p>
+                            <div class="content-item-meta">
+                                <span>Category: ${news.category}</span>
+                                <div class="content-actions">
+                                    <button class="content-action" onclick="editNews('${news.id}')">✏️</button>
+                                    <button class="content-action" onclick="deleteNews('${news.id}')">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join(''));
+                } else {
+                    container.html('<p style="text-align: center; color: var(--text-secondary);">No news articles yet. Click "Add News" to create your first article!</p>');
+                }
+            } catch (error) {
+                console.error('Error loading news:', error);
+                $('#myNewsList').html('<p style="color: #ef4444;">Error loading news</p>');
+            }
+        }
+        
+        async function loadUserPublications(userEmail) {
+            try {
+                const response = await fetch(`/api/user/publications?email=${userEmail}`);
+                const data = await response.json();
+                
+                const container = $('#myPublicationsList');
+                if (data.publications && data.publications.length > 0) {
+                    container.html(data.publications.map(pub => `
+                        <div class="content-item">
+                            <div class="content-item-title">${pub.title}</div>
+                            <p style="color: var(--text-secondary); margin: 8px 0;">${pub.authors} (${pub.year})</p>
+                            <div class="content-item-meta">
+                                <span>${pub.venue || 'Journal/Conference TBD'}</span>
+                                <div class="content-actions">
+                                    <button class="content-action" onclick="editPublication('${pub.id}')">✏️</button>
+                                    <button class="content-action" onclick="deletePublication('${pub.id}')">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join(''));
+                } else {
+                    container.html('<p style="text-align: center; color: var(--text-secondary);">No publications yet. Click "Add Publication" to add your research!</p>');
+                }
+            } catch (error) {
+                console.error('Error loading publications:', error);
+                $('#myPublicationsList').html('<p style="color: #ef4444;">Error loading publications</p>');
+            }
+        }
+        
+        // Form submission handlers
+        async function handleProfileUpdate(e) {
+            e.preventDefault();
+            
+            const user = huLabAuth.getUser();
+            if (!user) return;
+            
+            const formData = {
+                name: $('#profileName').val(),
+                institution: $('#profileInstitution').val(),
+                role: $('#profileRole').val(),
+                interests: $('#profileInterests').val(),
+                scholarUrl: $('#profileScholarUrl').val()
+            };
+            
+            try {
+                const response = await fetch('/api/user/profile', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${huLabAuth.getToken()}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (response.ok) {
+                    showNotification('Profile updated successfully!', 'success');
+                    closeModal('profileModal');
+                    // Update stored user data
+                    const updatedUser = { ...user, ...formData };
+                    localStorage.setItem('hulab_user_data', JSON.stringify(updatedUser));
+                    // Refresh UI
+                    huLabAuth.onUserLogin(updatedUser);
+                } else {
+                    showNotification('Failed to update profile. Please try again.', 'error');
+                }
+            } catch (error) {
+                console.error('Profile update error:', error);
+                showNotification('Error updating profile', 'error');
+            }
+        }
+        
+        async function handleProjectSubmission(e) {
+            e.preventDefault();
+            
+            const user = huLabAuth.getUser();
+            if (!user) return;
+            
+            const projectData = {
+                title: $('#projectTitle').val(),
+                description: $('#projectDescription').val(),
+                status: $('#projectStatus').val(),
+                tags: $('#projectTags').val().split(',').map(tag => tag.trim()).filter(tag => tag),
+                author: user.email,
+                createdAt: new Date().toISOString()
+            };
+            
+            try {
+                const response = await fetch('/api/projects', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${huLabAuth.getToken()}`
+                    },
+                    body: JSON.stringify(projectData)
+                });
+                
+                if (response.ok) {
+                    showNotification('Project created successfully!', 'success');
+                    closeModal('projectModal');
+                    loadTabContent('projects'); // Refresh projects list
+                } else {
+                    showNotification('Failed to create project. Please try again.', 'error');
+                }
+            } catch (error) {
+                console.error('Project creation error:', error);
+                showNotification('Error creating project', 'error');
+            }
+        }
+        
+        async function handleNewsSubmission(e) {
+            e.preventDefault();
+            
+            const user = huLabAuth.getUser();
+            if (!user) return;
+            
+            const newsData = {
+                title: $('#newsTitle').val(),
+                content: $('#newsContent').val(),
+                category: $('#newsCategory').val(),
+                author: user.email,
+                authorName: user.name,
+                createdAt: new Date().toISOString()
+            };
+            
+            try {
+                const response = await fetch('/api/news', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${huLabAuth.getToken()}`
+                    },
+                    body: JSON.stringify(newsData)
+                });
+                
+                if (response.ok) {
+                    showNotification('News article published successfully!', 'success');
+                    closeModal('newsModal');
+                    loadTabContent('news'); // Refresh news list
+                } else {
+                    showNotification('Failed to publish news. Please try again.', 'error');
+                }
+            } catch (error) {
+                console.error('News publishing error:', error);
+                showNotification('Error publishing news', 'error');
+            }
+        }
+        
+        async function handlePublicationSubmission(e) {
+            e.preventDefault();
+            
+            const user = huLabAuth.getUser();
+            if (!user) return;
+            
+            const publicationData = {
+                title: $('#publicationTitle').val(),
+                authors: $('#publicationAuthors').val(),
+                venue: $('#publicationVenue').val(),
+                year: parseInt($('#publicationYear').val()),
+                doi: $('#publicationDoi').val(),
+                abstract: $('#publicationAbstract').val(),
+                submittedBy: user.email,
+                createdAt: new Date().toISOString()
+            };
+            
+            try {
+                const response = await fetch('/api/publications', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${huLabAuth.getToken()}`
+                    },
+                    body: JSON.stringify(publicationData)
+                });
+                
+                if (response.ok) {
+                    showNotification('Publication added successfully!', 'success');
+                    closeModal('publicationModal');
+                    loadTabContent('publications'); // Refresh publications list
+                } else {
+                    showNotification('Failed to add publication. Please try again.', 'error');
+                }
+            } catch (error) {
+                console.error('Publication submission error:', error);
+                showNotification('Error adding publication', 'error');
+            }
+        }
+        
+        // Content management functions
+        function editProject(projectId) {
+            // TODO: Implement project editing
+            console.log('Edit project:', projectId);
+        }
+        
+        function deleteProject(projectId) {
+            if (confirm('Are you sure you want to delete this project?')) {
+                // TODO: Implement project deletion
+                console.log('Delete project:', projectId);
+            }
+        }
+        
+        function editNews(newsId) {
+            // TODO: Implement news editing
+            console.log('Edit news:', newsId);
+        }
+        
+        function deleteNews(newsId) {
+            if (confirm('Are you sure you want to delete this news article?')) {
+                // TODO: Implement news deletion
+                console.log('Delete news:', newsId);
+            }
+        }
+        
+        function editPublication(pubId) {
+            // TODO: Implement publication editing
+            console.log('Edit publication:', pubId);
+        }
+        
+        function deletePublication(pubId) {
+            if (confirm('Are you sure you want to delete this publication?')) {
+                // TODO: Implement publication deletion
+                console.log('Delete publication:', pubId);
+            }
+        }
+        
+        // ===== GOOGLE SCHOLAR INTEGRATION =====
+        
+        async function importFromGoogleScholar() {
+            const scholarUrl = $('#profileScholarUrl').val().trim();
+            const user = huLabAuth.getUser();
+            
+            if (!scholarUrl || !user) {
+                showNotification('Please enter your Google Scholar URL first', 'error');
+                return;
+            }
+            
+            if (!isValidScholarUrl(scholarUrl)) {
+                showNotification('Please enter a valid Google Scholar profile URL', 'error');
+                return;
+            }
+            
+            // Show loading state
+            $('#importProgress').show();
+            $('#importScholarBtn').prop('disabled', true).text('Importing...');
+            
+            try {
+                console.log('Importing publications from Google Scholar...');
+                
+                const response = await fetch('/api/scholar/import', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${huLabAuth.getToken()}`
+                    },
+                    body: JSON.stringify({
+                        scholarUrl: scholarUrl,
+                        userEmail: user.email,
+                        userName: user.name
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    console.log('Scholar import result:', result);
+                    
+                    if (result.imported > 0) {
+                        showNotification(`✅ Successfully imported ${result.imported} publications from Google Scholar!`, 'success');
+                        
+                        // Refresh publications tab if it's active
+                        if ($('#publications-tab').hasClass('active')) {
+                            loadTabContent('publications');
+                        }
+                        
+                        // Show import summary
+                        showScholarImportSummary(result);
+                    } else {
+                        showNotification('No new publications found to import', 'info');
+                    }
+                } else {
+                    const error = await response.json();
+                    showNotification(`Import failed: ${error.message || 'Unknown error'}`, 'error');
+                }
+                
+            } catch (error) {
+                console.error('Scholar import error:', error);
+                showNotification('Failed to import from Google Scholar. Please check your URL and try again.', 'error');
+            } finally {
+                // Hide loading state
+                $('#importProgress').hide();
+                $('#importScholarBtn').prop('disabled', false).text('📥 Import Publications from Scholar');
+            }
+        }
+        
+        function showScholarImportSummary(result) {
+            const summaryHtml = `
+                <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); padding: 16px; border-radius: 8px; margin: 12px 0;">
+                    <h4 style="margin: 0 0 8px 0; color: #22c55e;">📚 Import Summary</h4>
+                    <p style="margin: 0; font-size: 0.9rem;">
+                        ✅ Imported: ${result.imported} publications<br>
+                        ⚠️ Duplicates skipped: ${result.skipped || 0}<br>
+                        📊 Total publications: ${result.total || result.imported}
+                    </p>
+                </div>
+            `;
+            
+            // Show summary in Scholar actions area
+            $('#scholarActions').append(summaryHtml);
+            
+            // Remove summary after 10 seconds
+            setTimeout(() => {
+                $('#scholarActions').find('div').last().fadeOut(() => {
+                    $(this).remove();
+                });
+            }, 10000);
         }
     </script>
 

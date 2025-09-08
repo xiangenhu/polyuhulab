@@ -171,43 +171,41 @@ class WebSocketManager {
 // Initialize WebSocket manager
 const wsManager = new WebSocketManager();
 
-// Authentication utilities
+// Authentication utilities - Updated for OAuth system
 function checkAuth() {
-    const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
+    // Check OAuth token and user data
+    const token = localStorage.getItem('hulab_oauth_token');
+    const user = localStorage.getItem('hulab_user_data');
     
     if (!token || !user) {
+        console.log('checkAuth: No OAuth token or user data found');
         return false;
     }
     
     try {
-        // Check if token is expired (basic check)
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const now = Date.now() / 1000;
-        
-        if (payload.exp && payload.exp < now) {
-            // Token expired
-            logout();
-            return false;
-        }
-        
+        // Basic validation that user data is valid JSON
+        JSON.parse(user);
+        console.log('checkAuth: OAuth authentication valid');
         return true;
     } catch (error) {
-        console.error('Error checking authentication:', error);
+        console.error('checkAuth: Error validating user data:', error);
         return false;
     }
 }
 
 function logout() {
+    // Clear both old and new token keys for compatibility
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('hulab_oauth_token');
+    localStorage.removeItem('hulab_user_data');
     wsManager.disconnect();
     window.location.href = 'index.html';
 }
 
-// API utilities
+// API utilities - Updated for OAuth
 function makeApiRequest(url, options = {}) {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('hulab_oauth_token') || localStorage.getItem('token');
     
     const defaultOptions = {
         headers: {
@@ -652,10 +650,32 @@ async function initializeSharedComponents() {
     }
 }
 
-// Initialize WebSocket connection when authenticated
+// Initialize shared components and WebSocket when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize shared components first
     initializeSharedComponents();
+    
+    // Initialize animations
+    setTimeout(initializeAnimations, 100);
+    
+    // Set up OAuth integration if available
+    if (window.huLabAuth) {
+        // Handle OAuth login events
+        window.addEventListener('hulab:userLogin', function(event) {
+            console.log('Shared-app: User logged in, connecting WebSocket');
+            if (checkAuth()) {
+                wsManager.connect();
+            }
+        });
+        
+        // Handle OAuth logout events
+        window.addEventListener('hulab:userLogout', function() {
+            console.log('Shared-app: User logged out, disconnecting WebSocket');
+            wsManager.disconnect();
+        });
+    }
+    
+    // Check authentication for WebSocket
     if (checkAuth()) {
         wsManager.connect();
         
@@ -672,9 +692,6 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('WebSocket message:', event.detail);
         });
     }
-    
-    // Initialize animations
-    setTimeout(initializeAnimations, 100);
 });
 
 // Auto-save functionality

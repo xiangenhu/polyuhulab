@@ -1,0 +1,14 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+.env.example
+*.md
+logs/*.log
+.claude/
+coverage/
+.nyc_output/
+combined.log
+error.log
+server.log

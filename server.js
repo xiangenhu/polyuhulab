@@ -61,10 +61,10 @@ app.use(helmet({
         directives: {
             defaultSrc: ["'self'"],
             styleSrc: ["'self'", "'unsafe-inline'"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "https://code.jquery.com", "https://accounts.google.com", "https://cdn.jsdelivr.net"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "https://code.jquery.com", "https://accounts.google.com", "https://cdn.jsdelivr.net", "https://oauth.skoonline.org"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'", "wss:", "https:"],
-            frameSrc: ["'self'", "https://accounts.google.com"],
+            connectSrc: ["'self'", "wss:", "https:", "https://oauth.skoonline.org"],
+            frameSrc: ["'self'", "https://accounts.google.com", "https://oauth.skoonline.org"],
         },
     },
 }));
@@ -124,6 +124,12 @@ app.get('/shared-styles.css', (req, res) => {
 app.get('/shared-app.js', (req, res) => {
     res.setHeader('Content-Type', 'application/javascript');
     res.sendFile(path.join(__dirname, 'views', 'shared-app.js'));
+});
+
+// Serve OAuth authentication script
+app.get('/oauth-auth.js', (req, res) => {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.sendFile(path.join(__dirname, 'views', 'oauth-auth.js'));
 });
 
 // Serve other static files from views

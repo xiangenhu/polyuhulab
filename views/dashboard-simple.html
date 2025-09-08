@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Simple Dashboard Test - Hu Lab @ PolyU</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="shared-styles.css">
+    <style>
+        .test-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 40px;
+        }
+        
+        .test-section {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-section">
+            <h1>🧪 Simple Dashboard Test</h1>
+            <p>This is a minimal dashboard with NO authentication checks.</p>
+            <p>URL Parameters: <span id="urlParams"></span></p>
+            <p>LocalStorage: <span id="storageInfo"></span></p>
+            
+            <div id="userInfo" style="margin: 20px 0;">
+                <!-- User info will be shown here -->
+            </div>
+            
+            <button onclick="goToRealDashboard()" style="background: #4285f4; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer;">
+                Go to Real Dashboard
+            </button>
+            
+            <button onclick="clearAll()" style="background: #dc3545; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; margin-left: 12px;">
+                Clear All Storage
+            </button>
+            
+            <button onclick="logoutUser()" style="background: #f59e0b; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; margin-left: 12px;">
+                🔓 Logout
+            </button>
+        </div>
+        
+        <div class="test-section">
+            <h3>Debug Log:</h3>
+            <div id="debugLog" style="background: #1a1a1a; color: #00ff00; padding: 16px; border-radius: 6px; font-family: monospace; max-height: 300px; overflow-y: auto; min-height: 200px;">
+                Loading...
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let logs = [];
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logs.push(`[${timestamp}] ${message}`);
+            document.getElementById('debugLog').innerHTML = logs.slice(-15).join('\n');
+            console.log(message);
+        }
+        
+        function showURLParams() {
+            const params = new URLSearchParams(window.location.search);
+            const paramsObj = {};
+            for (let [key, value] of params) {
+                paramsObj[key] = value;
+            }
+            document.getElementById('urlParams').textContent = JSON.stringify(paramsObj);
+        }
+        
+        function showStorageInfo() {
+            const storage = {
+                'hulab_oauth_token': localStorage.getItem('hulab_oauth_token') ? 'Present' : 'Missing',
+                'hulab_user_data': localStorage.getItem('hulab_user_data') ? 'Present' : 'Missing',
+                'token': localStorage.getItem('token') ? 'Present' : 'Missing',
+                'user': localStorage.getItem('user') ? 'Present' : 'Missing'
+            };
+            document.getElementById('storageInfo').textContent = JSON.stringify(storage);
+        }
+        
+        async function loadUserInfo() {
+            const token = new URLSearchParams(window.location.search).get('token');
+            const storedToken = localStorage.getItem('hulab_oauth_token');
+            const actualToken = token || storedToken;
+            
+            if (actualToken) {
+                log(`Found token: ${actualToken.substring(0, 10)}...`);
+                
+                try {
+                    const response = await fetch('https://oauth.skoonline.org/auth/userinfo', {
+                        headers: { 'Authorization': `Bearer ${actualToken}` }
+                    });
+                    
+                    if (response.ok) {
+                        const userInfo = await response.json();
+                        log(`✅ User loaded: ${userInfo.user.name}`);
+                        
+                        document.getElementById('userInfo').innerHTML = `
+                            <div style="border: 2px solid green; padding: 16px; border-radius: 8px;">
+                                <h4>✅ User Information:</h4>
+                                <p><strong>Name:</strong> ${userInfo.user.name}</p>
+                                <p><strong>Email:</strong> ${userInfo.user.email}</p>
+                                <p><strong>Picture:</strong> ${userInfo.user.picture ? 'Yes' : 'No'}</p>
+                            </div>
+                        `;
+                        
+                        // Store token if from URL
+                        if (token) {
+                            localStorage.setItem('hulab_oauth_token', token);
+                            localStorage.setItem('hulab_user_data', JSON.stringify(userInfo.user));
+                            log('Stored token and user data');
+                        }
+                        
+                    } else {
+                        log(`❌ Failed to load user: ${response.status}`);
+                    }
+                } catch (error) {
+                    log(`❌ Error: ${error.message}`);
+                }
+            } else {
+                log('No token found');
+            }
+        }
+        
+        function goToRealDashboard() {
+            log('Going to real dashboard...');
+            window.location.href = '/views/dashboard.html';
+        }
+        
+        function clearAll() {
+            localStorage.clear();
+            log('🧹 Cleared all storage');
+            showStorageInfo();
+            document.getElementById('userInfo').innerHTML = '<p style="color: var(--text-secondary);">Storage cleared - no user data</p>';
+        }
+        
+        async function logoutUser() {
+            const token = localStorage.getItem('hulab_oauth_token');
+            if (!token) {
+                log('❌ No token to logout with');
+                return;
+            }
+            
+            try {
+                log('🔓 Logging out...');
+                
+                // Call OAuth gateway logout
+                const response = await fetch('https://oauth.skoonline.org/auth/logout', {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    log('✅ OAuth logout successful');
+                } else {
+                    log(`⚠️ OAuth logout failed: ${response.status}`);
+                }
+            } catch (error) {
+                log(`❌ Logout error: ${error.message}`);
+            } finally {
+                // Clear local storage regardless
+                localStorage.clear();
+                log('🧹 Cleared local storage');
+                showStorageInfo();
+                document.getElementById('userInfo').innerHTML = '<p style="color: var(--text-secondary);">Logged out - no user data</p>';
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            log('🚀 Simple dashboard test loaded');
+            showURLParams();
+            showStorageInfo();
+            loadUserInfo();
+        });
+    </script>
+</body>
+</html>

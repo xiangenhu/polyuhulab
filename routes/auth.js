@@ -506,6 +506,255 @@ router.get('/sessions', optionalAuthenticate, (req, res) => {
 });
 
 /**
+ * OAuth user registration endpoint for oauth.skoonline.org integration
+ * This endpoint is called after successful OAuth authentication to register/legitimize users
+ */
+router.post('/oauth/register', async (req, res) => {
+    try {
+        const { user, token } = req.body;
+        
+        // Validate required fields
+        if (!user || !user.email || !user.name) {
+            return res.status(400).json({
+                error: 'Invalid user data',
+                message: 'User email and name are required'
+            });
+        }
+
+        logger.info('OAuth user registration initiated', {
+            email: user.email,
+            name: user.name,
+            provider: 'oauth.skoonline.org'
+        });
+
+        // Check if user already exists in xAPI profiles
+        const existingProfile = await xapiService.getUserProfile(user.email);
+        
+        // Create comprehensive user profile
+        const userProfile = {
+            id: user.sub || user.id || user.email, // Use Google ID or email as fallback
+            email: user.email,
+            name: user.name,
+            firstName: user.given_name || user.givenName,
+            lastName: user.family_name || user.familyName,
+            avatar: user.picture,
+            provider: 'oauth.skoonline.org',
+            googleId: user.sub,
+            role: existingProfile?.role || 'student', // Preserve existing role or default to student
+            lastLogin: new Date().toISOString(),
+            locale: user.locale || 'en'
+        };
+
+        if (existingProfile) {
+            // Update existing user profile
+            const updatedProfile = {
+                ...existingProfile,
+                ...userProfile,
+                loginCount: (existingProfile.loginCount || 0) + 1,
+                lastLogin: userProfile.lastLogin,
+                // Preserve existing preferences and permissions
+                preferences: existingProfile.preferences || {
+                    theme: 'light',
+                    language: user.locale || 'en',
+                    notifications: true,
+                    emailNotifications: true
+                },
+                permissions: existingProfile.permissions || {
+                    canCreateProjects: true,
+                    canUploadFiles: true,
+                    canCollaborate: true,
+                    canUseAI: true
+                }
+            };
+
+            await xapiService.saveUserProfile(user.email, updatedProfile);
+            
+            // Track login activity
+            await xapiService.sendStatement({
+                actor: { email: user.email, name: user.name },
+                verb: {
+                    id: 'http://adlnet.gov/expapi/verbs/experienced',
+                    display: { 'en-US': 'logged in' }
+                },
+                object: {
+                    id: `${xapiService.baseActivityId}/portal`,
+                    definition: {
+                        type: 'http://adlnet.gov/expapi/activities/application',
+                        name: { 'en-US': 'HuLab Portal' }
+                    }
+                }
+            });
+            
+            logger.info('Updated existing user profile', { 
+                email: user.email, 
+                loginCount: updatedProfile.loginCount 
+            });
+
+            return res.json({
+                success: true,
+                user: updatedProfile,
+                isNewUser: false,
+                message: 'User profile updated successfully'
+            });
+        } else {
+            // Create new user profile
+            const newProfile = {
+                ...userProfile,
+                createdAt: new Date().toISOString(),
+                loginCount: 1,
+                isLegitimate: true, // Mark as legitimate user
+                status: 'active',
+                preferences: {
+                    theme: 'light',
+                    language: user.locale || 'en',
+                    notifications: true,
+                    emailNotifications: true
+                },
+                permissions: {
+                    canCreateProjects: true,
+                    canUploadFiles: true,
+                    canCollaborate: true,
+                    canUseAI: true
+                }
+            };
+
+            await xapiService.saveUserProfile(user.email, newProfile);
+            
+            // Track user registration in xAPI LRS
+            await xapiService.trackUserRegistration(user.email, user.name, 'OAuth via oauth.skoonline.org');
+            
+            logger.info('Created new legitimate user profile', { 
+                email: user.email,
+                role: newProfile.role 
+            });
+
+            return res.json({
+                success: true,
+                user: newProfile,
+                isNewUser: true,
+                message: 'User registered and legitimized successfully'
+            });
+        }
+
+    } catch (error) {
+        logger.error('OAuth user registration error', {
+            error: error.message,
+            stack: error.stack,
+            email: req.body?.user?.email
+        });
+
+        return res.status(500).json({
+            error: 'Registration failed',
+            message: 'Failed to register user in system',
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+/**
+ * Get user profile endpoint for OAuth system
+ */
+router.get('/oauth/profile/:email', async (req, res) => {
+    try {
+        const { email } = req.params;
+        
+        if (!email) {
+            return res.status(400).json({
+                error: 'Email required',
+                message: 'User email parameter is required'
+            });
+        }
+
+        const profile = await xapiService.getUserProfile(email);
+        
+        if (!profile) {
+            return res.status(404).json({
+                error: 'User not found',
+                message: 'User profile not found in system'
+            });
+        }
+
+        // Remove sensitive information
+        const safeProfile = {
+            ...profile,
+            accessToken: undefined,
+            refreshToken: undefined
+        };
+
+        return res.json({
+            success: true,
+            user: safeProfile
+        });
+
+    } catch (error) {
+        logger.error('Get user profile error', {
+            error: error.message,
+            email: req.params.email
+        });
+
+        return res.status(500).json({
+            error: 'Profile retrieval failed',
+            message: 'Failed to retrieve user profile'
+        });
+    }
+});
+
+/**
+ * Proxy endpoint for OAuth user info (to handle CORS)
+ * GET /auth/oauth/userinfo
+ */
+router.get('/oauth/userinfo', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
+            return res.status(401).json({
+                error: 'No authorization header',
+                message: 'Authorization token is required'
+            });
+        }
+
+        // Proxy the request to oauth.skoonline.org using axios
+        const axios = require('axios');
+        const response = await axios.get('https://oauth.skoonline.org/auth/userinfo', {
+            headers: {
+                'Authorization': authHeader
+            }
+        });
+
+        const userInfo = response.data;
+        
+        // Log the user info retrieval
+        logger.info('OAuth user info retrieved via proxy', {
+            email: userInfo.user?.email,
+            name: userInfo.user?.name
+        });
+        
+        res.json(userInfo);
+
+    } catch (error) {
+        logger.error('OAuth userinfo proxy error', {
+            error: error.message,
+            status: error.response?.status,
+            stack: error.stack
+        });
+
+        // Handle axios errors
+        if (error.response) {
+            res.status(error.response.status).json({
+                error: 'OAuth gateway error',
+                message: 'Failed to retrieve user information',
+                details: error.response.data
+            });
+        } else {
+            res.status(500).json({
+                error: 'Proxy error',
+                message: 'Failed to proxy OAuth request'
+            });
+        }
+    }
+});
+
+/**
  * Error handling middleware for auth routes
  */
 router.use((error, req, res, next) => {

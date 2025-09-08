@@ -10,6 +10,46 @@
                 <a href="members.html" class="nav-item" data-page="members">Members</a>
                 <a href="dashboard.html" class="nav-item" data-page="dashboard">Dashboard</a>
             </div>
+            <div class="nav-user-info" style="display: none; align-items: center; gap: 12px; margin-left: 20px;">
+                <!-- User info will be populated by OAuth system -->
+            </div>
         </div>
     </div>
 </nav>
+
+<style>
+.nav-user-profile {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.nav-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--glass-border);
+}
+
+.nav-username {
+    color: var(--text-primary);
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.nav-logout-btn {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-secondary);
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.nav-logout-btn:hover {
+    background: var(--glass-hover);
+    color: var(--text-primary);
+}
+</style>

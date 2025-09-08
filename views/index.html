@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hu Lab @ PolyU - Collaboration with AI in Education</title>
     <link rel="stylesheet" href="shared-styles.css">
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="oauth-auth.js"></script>
     <style>
         .hero-section {
             padding: 80px 0 60px;
@@ -243,26 +243,21 @@
             <div class="login-section">
                 <div class="glass google-login-container">
                     <p class="login-prompt">Sign in to access your personalized learning workspace</p>
-                    <div id="g_id_onload"
-                         data-client_id="YOUR_GOOGLE_CLIENT_ID"
-                         data-callback="handleCredentialResponse"
-                         data-auto_prompt="false">
-                    </div>
-                    <div class="g_id_signin"
-                         data-type="standard"
-                         data-size="large"
-                         data-theme="filled_blue"
-                         data-text="signin_with"
-                         data-shape="rectangular"
-                         data-logo_alignment="left">
-                    </div>
-                    <div class="login-loading" id="loginLoading">
-                        <div class="loading"></div>
-                        <span>Signing you in...</span>
-                    </div>
+                    <button id="oauthLoginBtn" class="btn btn-primary oauth-login-btn" style="padding: 12px 24px; background: #4285f4; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; display: flex; align-items: center; gap: 8px; margin: 20px auto;">
+                        🔑 Login with Google
+                    </button>
                     <p class="text-sm text-accent">
                         By signing in, you agree to our terms of service and privacy policy
                     </p>
+                </div>
+            </div>
+            
+            <!-- User Section (hidden by default, shown when logged in) -->
+            <div class="user-section" style="display: none;">
+                <div class="glass google-login-container">
+                    <div id="userProfileDisplay">
+                        <!-- User profile will be populated here -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -382,77 +377,61 @@
 
     <script src="shared-app.js"></script>
     <script>
-        // Google Sign-In callback
-        function handleCredentialResponse(response) {
-            const loginLoading = $('#loginLoading');
-            const googleButton = $('.g_id_signin');
+        // OAuth event handlers
+        window.addEventListener('hulab:userLogin', function(event) {
+            const user = event.detail;
+            console.log('User logged in on index page:', user);
             
-            loginLoading.addClass('active');
-            googleButton.hide();
-            
-            // Decode JWT token (in production, verify on server)
-            const responsePayload = decodeJwtResponse(response.credential);
-            
-            // Simulate API call to authenticate user
-            $.ajax({
-                url: '/api/auth/google',
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                data: JSON.stringify({
-                    credential: response.credential,
-                    user: {
-                        id: responsePayload.sub,
-                        email: responsePayload.email,
-                        name: responsePayload.name,
-                        picture: responsePayload.picture
-                    }
-                }),
-                success: function(data) {
-                    // Store user data
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    localStorage.setItem('token', data.token);
-                    
-                    // Show success message
-                    showNotification('Login successful! Redirecting to dashboard...', 'success');
-                    
-                    // Redirect to dashboard
-                    setTimeout(() => {
-                        window.location.href = 'dashboard.html';
-                    }, 1500);
-                },
-                error: function(xhr, status, error) {
-                    console.error('Login error:', error);
-                    showNotification('Login failed. Please try again.', 'error');
-                    
-                    loginLoading.removeClass('active');
-                    googleButton.show();
-                }
-            });
-        }
-        
-        // Helper function to decode JWT
-        function decodeJwtResponse(token) {
-            var base64Url = token.split('.')[1];
-            var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-            var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-            }).join(''));
-            return JSON.parse(jsonPayload);
-        }
-        
-        // Check if user is already logged in
-        $(document).ready(function() {
-            const user = localStorage.getItem('user');
-            const token = localStorage.getItem('token');
-            
-            if (user && token) {
-                // User is already logged in, redirect to dashboard
-                window.location.href = 'dashboard.html';
+            // Update user profile display
+            const userProfileDisplay = document.getElementById('userProfileDisplay');
+            if (userProfileDisplay) {
+                userProfileDisplay.innerHTML = huLabAuth.createUserProfileHTML(user);
             }
             
-            // Initialize animations
+            // Show success notification
+            if (window.showNotification) {
+                showNotification(`Welcome ${user.given_name || user.name}! Redirecting to dashboard...`, 'success');
+            }
+            
+            // Redirect to dashboard after a short delay
+            setTimeout(() => {
+                window.location.href = '/views/dashboard.html';
+            }, 1500);
+        });
+        
+        window.addEventListener('hulab:userLogout', function() {
+            console.log('User logged out');
+            if (window.showNotification) {
+                showNotification('You have been logged out successfully', 'info');
+            }
+        });
+        
+        // Check if user is already logged in
+        $(document).ready(async function() {
+            // Bind OAuth login button
+            const loginBtn = document.getElementById('oauthLoginBtn');
+            if (loginBtn && window.huLabAuth) {
+                loginBtn.addEventListener('click', function() {
+                    huLabAuth.loginWithGoogle();
+                });
+            }
+            
+            // Check if user is already authenticated
+            if (window.huLabAuth) {
+                try {
+                    const isAuthenticated = await huLabAuth.initialize();
+                    if (isAuthenticated) {
+                        // User is already logged in - DISABLED REDIRECT FOR TESTING
+                        console.log('User already authenticated - would redirect to dashboard');
+                        // window.location.href = '/views/dashboard.html'; // COMMENTED OUT FOR TESTING
+                        // return; // Don't initialize animations if redirecting
+                    }
+                } catch (error) {
+                    console.error('OAuth initialization error:', error);
+                }
+            }
+            
+            // Initialize animations only if staying on index page
             initializeAnimations();
         });
         

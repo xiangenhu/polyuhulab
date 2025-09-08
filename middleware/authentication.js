@@ -19,8 +19,8 @@ const logger = winston.createLogger({
  * Redirects to login if not authenticated for browser requests
  * Returns 401 JSON response for API requests
  */
-function authenticate(req, res, next) {
-    // Check if user is authenticated
+async function authenticate(req, res, next) {
+    // Check session-based authentication first
     if (req.isAuthenticated && req.isAuthenticated()) {
         // Add user info to request context for logging
         req.userContext = {
@@ -30,7 +30,7 @@ function authenticate(req, res, next) {
             name: req.user.name
         };
         
-        logger.info('User authenticated', {
+        logger.info('User authenticated via session', {
             userId: req.user.id,
             email: req.user.email,
             path: req.path,
@@ -39,6 +39,52 @@ function authenticate(req, res, next) {
         });
         
         return next();
+    }
+    
+    // Check for OAuth Bearer token
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.substring(7);
+        
+        try {
+            // Validate token with OAuth gateway
+            const axios = require('axios');
+            const response = await axios.get('https://oauth.skoonline.org/auth/userinfo', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.data && response.data.user) {
+                const user = response.data.user;
+                
+                // Add OAuth user to request context
+                req.user = {
+                    id: user.sub || user.id,
+                    email: user.email,
+                    name: user.name,
+                    role: user.role || 'student',
+                    provider: 'oauth'
+                };
+                
+                req.userContext = req.user;
+                
+                logger.info('User authenticated via OAuth token', {
+                    userId: req.user.id,
+                    email: req.user.email,
+                    path: req.path,
+                    method: req.method,
+                    ip: req.ip
+                });
+                
+                return next();
+            }
+        } catch (error) {
+            logger.warn('OAuth token validation failed', {
+                error: error.message,
+                path: req.path,
+                method: req.method,
+                ip: req.ip
+            });
+        }
     }
 
     // Log authentication failure

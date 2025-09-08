@@ -6,7 +6,7 @@
 class HuLabOAuth {
     constructor() {
         this.gateway = 'https://oauth.skoonline.org';
-        this.tokenKey = 'hulab_oauth_token';
+        this.tokenKey = 'oauth_token';  // Following docs/Oauth.md specification
         this.userKey = 'hulab_user_data';
         this.isInitializing = false;
         this.isInitialized = false;

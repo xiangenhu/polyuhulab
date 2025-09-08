@@ -132,6 +132,12 @@ app.get('/oauth-auth.js', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'oauth-auth.js'));
 });
 
+// Serve Hybrid authentication script
+app.get('/hybrid-auth.js', (req, res) => {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.sendFile(path.join(__dirname, 'views', 'hybrid-auth.js'));
+});
+
 // Serve other static files from views
 app.use('/views', express.static(path.join(__dirname, 'views'), {
     setHeaders: (res, filepath) => {
@@ -157,6 +163,10 @@ app.get('/', (req, res) => {
 
 app.get('/index.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'views', 'index.html'));
+});
+
+app.get('/login.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views', 'login.html'));
 });
 
 // Public pages (no authentication required)

@@ -8,20 +8,22 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="oauth-auth.js"></script>
     <script src="hybrid-auth.js"></script>
+    <script src="theme-manager.js"></script>
     <style>
         body {
-            background: var(--bg-primary);
+            background: var(--bg-primary, var(--primary-gradient));
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
             overflow-x: hidden;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .login-container {
             width: 100%;
-            max-width: 480px;
+            max-width: 600px;
             padding: 40px;
             margin: 20px;
         }
@@ -68,39 +70,45 @@
             font-size: 1.1rem;
         }
 
-        .auth-tabs {
-            display: flex;
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            padding: 4px;
+        .auth-options {
+            display: grid;
+            gap: 30px;
             margin-bottom: 30px;
+        }
+
+        .auth-method {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .auth-tab {
-            flex: 1;
-            padding: 12px 20px;
-            text-align: center;
-            border-radius: 8px;
-            cursor: pointer;
+            border-radius: 16px;
+            padding: 24px;
             transition: all 0.3s ease;
-            font-weight: 500;
-            color: #9ca3af;
         }
 
-        .auth-tab.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #ffffff;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-            transform: translateY(-1px);
+        .auth-method:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
         }
 
-        .auth-section {
-            display: none;
+        .auth-method-header {
+            text-align: center;
+            margin-bottom: 20px;
         }
 
-        .auth-section.active {
-            display: block;
+        .auth-method-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .auth-method-subtitle {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
         }
 
         /* OAuth Section */
@@ -406,6 +414,14 @@
                 flex-direction: column;
                 gap: 0;
             }
+
+            .auth-options {
+                gap: 20px;
+            }
+
+            .auth-method {
+                padding: 20px;
+            }
         }
     </style>
 </head>
@@ -428,32 +444,31 @@
             <!-- Messages -->
             <div id="messageContainer"></div>
 
-            <!-- Authentication Tabs -->
-            <div class="auth-tabs">
-                <div class="auth-tab active" data-tab="oauth">Google Sign In</div>
-                <div class="auth-tab" data-tab="email">Email</div>
-            </div>
-
-            <!-- OAuth Section -->
-            <div id="oauth-section" class="auth-section active">
-                <div class="oauth-section">
+            <!-- All Authentication Options -->
+            <div class="auth-options">
+                <!-- OAuth Method -->
+                <div class="auth-method">
+                    <div class="auth-method-header">
+                        <h3 class="auth-method-title">Quick Sign In</h3>
+                        <p class="auth-method-subtitle">Sign in instantly with your existing account</p>
+                    </div>
                     <div class="oauth-providers">
                         <button id="googleLoginBtn" class="oauth-btn google-btn">
                             <span>🔍</span>
                             <span>Continue with Google</span>
                         </button>
                     </div>
-                    <p style="color: var(--text-secondary); font-size: 14px; text-align: center;">
-                        Sign in with your Google account for instant access
-                    </p>
                 </div>
-            </div>
 
-            <!-- Email Section -->
-            <div id="email-section" class="auth-section">
-                <!-- Login Form -->
-                <div id="login-form" class="email-form">
-                    <form id="emailLoginForm">
+                <!-- Email Method -->
+                <div class="auth-method">
+                    <div class="auth-method-header">
+                        <h3 class="auth-method-title">Email & Password</h3>
+                        <p class="auth-method-subtitle">Use your email address to sign in or create an account</p>
+                    </div>
+                    <!-- Login Form -->
+                    <div id="login-form" class="email-form">
+                        <form id="emailLoginForm">
                         <div class="form-group">
                             <label class="form-label" for="loginEmail">Email Address</label>
                             <input type="email" id="loginEmail" name="email" class="form-input" placeholder="your.email@example.com" required>
@@ -559,7 +574,8 @@
                     </form>
 
                     <div class="form-links">
-                        <a href="#" class="form-link" id="backToLogin">Back to Sign In</a>
+                            <a href="#" class="form-link" id="backToLogin">Back to Sign In</a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -584,13 +600,7 @@
             }
 
             bindEvents() {
-                // Tab switching
-                document.querySelectorAll('.auth-tab').forEach(tab => {
-                    tab.addEventListener('click', (e) => {
-                        const tabType = e.target.getAttribute('data-tab');
-                        this.switchTab(tabType);
-                    });
-                });
+                // No tab switching needed since all options are visible
 
                 // OAuth buttons
                 document.getElementById('googleLoginBtn')?.addEventListener('click', () => {
@@ -650,16 +660,8 @@
             }
 
             switchTab(tabType) {
-                // Update tab UI
-                document.querySelectorAll('.auth-tab').forEach(tab => {
-                    tab.classList.toggle('active', tab.getAttribute('data-tab') === tabType);
-                });
-
-                // Show/hide sections
-                document.querySelectorAll('.auth-section').forEach(section => {
-                    section.classList.toggle('active', section.id === `${tabType}-section`);
-                });
-
+                // This method is kept for compatibility but no longer needed
+                // since all auth options are now visible
                 this.currentTab = tabType;
             }
 

@@ -13,8 +13,8 @@ RUN npm ci --only=production
 # Copy application source code
 COPY . .
 
-# Copy environment variables (you may want to handle this differently in production)
-COPY .env .env
+# Note: Environment variables should be set at runtime in production
+# rather than copying a local .env file
 
 # Create logs directory
 RUN mkdir -p logs

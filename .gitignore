@@ -1,6 +1,5 @@
 # Dependencies
 node_modules/
-package-lock.json
 yarn.lock
 
 # Environment variables
@@ -13,7 +12,10 @@ credentials/
 *.pem
 *.key
 *.crt
+# JSON files - ignore all except package files
 *.json
+!package.json
+!package-lock.json
 
 # Logs
 logs/

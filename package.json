@@ -4,10 +4,11 @@
   "description": "Hu Lab Educational Research Collaboration Portal",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "test:oauth-infrastructure": "node --test oauth-infrastructure.test.mjs",
+    "start": "node --import ./oauth-infrastructure.mjs server.js",
     "stop": "pkill -f 'node server.js' 2>/dev/null || true",
     "restart": "npm run stop && npm start",
-    "dev": "nodemon server.js",
+    "dev": "nodemon --exec \"node --import ./oauth-infrastructure.mjs\" server.js",
     "test": "jest"
   },
   "dependencies": {
@@ -44,3 +45,4 @@
   "author": "Hu Lab @ PolyU",
   "license": "MIT"
 }
+
